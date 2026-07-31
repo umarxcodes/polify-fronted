@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* Brand */
+    --color-brand-50: #e6fffa;
+    --color-brand-100: #b2f5ea;
+    --color-brand-200: #81e6d9;
+    --color-brand-300: #4fd1c5;
+    --color-brand-400: #26c6b9;
+    --color-brand-500: #00d4c8;
+    --color-brand-600: #00a89e;
+    --color-brand-700: #00857d;
+    --color-brand-800: #00635d;
+    --color-brand-900: #004540;
+
+    /* Surface */
+    --color-surface-50: #f8fafc;
+    --color-surface-100: #f1f5f9;
+    --color-surface-200: #e2e8f0;
+    --color-surface-300: #cbd5e1;
+    --color-surface-400: #94a3b8;
+    --color-surface-500: #64748b;
+    --color-surface-600: #475569;
+    --color-surface-700: #334155;
+    --color-surface-800: #1e293b;
+    --color-surface-900: #0f172a;
+
+    /* Semantic */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+
+    /* Border */
+    --color-border: #e2e8f0;
+
+    /* Radius */
+    --radius-sm: .5rem;
+    --radius-md: .75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+
+    /* Shadow */
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 6px 20px rgba(15,23,42,.08);
+    --shadow-lg: 0 15px 35px rgba(15,23,42,.12);
+
+    color-scheme: light;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-50 text-surface-900 antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand-500 text-white;
+  }
+
+  img {
+    @apply max-w-full h-auto;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  button {
+    @apply transition-all duration-200;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/30;
+  }
+}
+
+/* ==========================================================================
+   SCROLLBAR
+   ========================================================================== */
+
+@layer base {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400;
+  }
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2
+    rounded-xl
+    px-4 py-2.5
+    text-sm font-semibold
+    transition-all duration-200
+    disabled:pointer-events-none
+    disabled:opacity-50
+    active:scale-95;
+  }
+
+  .btn-primary {
+    @apply bg-brand-500
+    text-surface-900
+    hover:bg-brand-600
+    shadow-sm
+    hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-200
+    text-surface-800
+    hover:bg-surface-300;
+  }
+
+  .btn-outline {
+    @apply border border-surface-300
+    bg-white
+    text-surface-700
+    hover:bg-surface-100;
+  }
+
+  .btn-ghost {
+    @apply text-surface-600
+    hover:bg-surface-100
+    hover:text-surface-900;
+  }
+
+  .btn-danger {
+    @apply bg-red-500
+    text-white
+    hover:bg-red-600;
+  }
+
+  .btn-success {
+    @apply bg-emerald-500
+    text-white
+    hover:bg-emerald-600;
+  }
+}
+
+/* ==========================================================================
+   INPUTS
+   ========================================================================== */
+
+@layer components {
+  .input {
+    @apply w-full
+    rounded-xl
+    border
+    border-surface-300
+    bg-white
+    px-4
+    py-2.5
+    text-sm
+    text-surface-900
+    placeholder:text-surface-400
+    transition-all
+    duration-200
+    focus:border-brand-500
+    focus:ring-4
+    focus:ring-brand-500/10;
+  }
+
+  .input-error {
+    @apply border-red-500
+    focus:border-red-500
+    focus:ring-red-500/10;
+  }
+
+  .label {
+    @apply mb-2 block text-sm font-medium text-surface-700;
+  }
+
+  .helper-text {
+    @apply mt-1 text-xs text-surface-500;
+  }
+
+  .error-text {
+    @apply mt-1 text-xs text-red-500;
+  }
+}
+
+/* ==========================================================================
+   CARDS
+   ========================================================================== */
+
+@layer components {
+  .card {
+    @apply rounded-2xl
+    border
+    border-surface-200
+    bg-white
+    p-6
+    shadow-sm
+    transition-all
+    duration-300
+    hover:shadow-md;
+  }
+
+  .card-header {
+    @apply mb-4 flex items-center justify-between;
+  }
+
+  .card-title {
+    @apply text-lg font-bold text-surface-900;
+  }
+
+  .card-description {
+    @apply text-sm text-surface-500;
+  }
+}
+
+/* ==========================================================================
+   BADGES
+   ========================================================================== */
+
+@layer components {
+  .badge {
+    @apply inline-flex
+    items-center
+    gap-1
+    rounded-lg
+    px-2.5
+    py-1
+    text-xs
+    font-semibold;
+  }
+
+  .badge-primary {
+    @apply bg-brand-50 text-brand-700;
+  }
+
+  .badge-secondary {
+    @apply bg-surface-200 text-surface-700;
+  }
+
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .badge-warning {
+    @apply bg-amber-50 text-amber-700;
+  }
+
+  .badge-danger {
+    @apply bg-red-50 text-red-700;
+  }
+}
+
+/* ==========================================================================
+   ALERTS
+   ========================================================================== */
+
+@layer components {
+  .alert {
+    @apply rounded-xl
+    border
+    p-4
+    text-sm;
+  }
+
+  .alert-success {
+    @apply border-emerald-200
+    bg-emerald-50
+    text-emerald-700;
+  }
+
+  .alert-danger {
+    @apply border-red-200
+    bg-red-50
+    text-red-700;
+  }
+
+  .alert-warning {
+    @apply border-amber-200
+    bg-amber-50
+    text-amber-700;
+  }
+
+  .alert-info {
+    @apply border-blue-200
+    bg-blue-50
+    text-blue-700;
+  }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+@layer utilities {
+  .container-page {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-spacing {
+    @apply py-10 lg:py-16;
+  }
+
+  .glass {
+    @apply border border-white/20 bg-white/70 backdrop-blur-xl;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r
+    from-brand-500
+    to-cyan-500
+    bg-clip-text
+    text-transparent;
+  }
+
+  .animate-hover {
+    @apply transition-transform duration-200 hover:-translate-y-1;
+  }
+
+  .divider {
+    @apply h-px w-full bg-surface-200;
+  }
+}
