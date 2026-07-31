@@ -126,9 +126,9 @@ export default function DashboardLayout() {
           {/* User profile */}
           <div className="mt-2 pt-2 border-t border-surface-200/60">
             <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                {user?.name?.split(" ").map(n => n[0]).join("") || "U"}
-              </div>
+<div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+                </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-surface-900 truncate">
@@ -187,9 +187,9 @@ export default function DashboardLayout() {
 
               {/* User menu */}
               <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 transition-colors">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
-                  {user?.name?.split(" ").map(n => n[0]).join("") || "U"}
-                </div>
+<div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
+	                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+	                </div>
               </button>
             </div>
           </div>
