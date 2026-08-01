@@ -52,6 +52,15 @@ export default function LoginPage() {
         </label>
         <label className="check"><input type="checkbox" {...register("rememberMe")} /> <span>Remember me</span></label>
         <button className="auth-submit" disabled={isSubmitting || loginMutation.isPending}>{isSubmitting || loginMutation.isPending ? "Signing in…" : <>Sign in <ArrowRight size={18} /></>}</button>
+        <div className="auth-divider"><span>Or sign in with</span></div>
+        <div className="flex items-center gap-3">
+          <button type="button" className="auth-outline flex-1 flex items-center justify-center gap-2" onClick={() => toast.info("SSO coming soon")}>
+            Google
+          </button>
+          <button type="button" className="auth-outline flex-1 flex items-center justify-center gap-2" onClick={() => toast.info("SSO coming soon")}>
+            GitHub
+          </button>
+        </div>
       </form>
       <div className="auth-divider"><span>New to Pollify?</span></div>
       <Link className="auth-outline" to="/register">Create a free account</Link>

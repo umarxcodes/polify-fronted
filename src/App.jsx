@@ -30,6 +30,8 @@ const AdminCategoriesPage = lazy(() => import("./features/admin/pages/AdminCateg
 const AdminAuditLogsPage = lazy(() => import("./features/admin/pages/AdminAuditLogsPage"));
 const AdminAnalyticsPage = lazy(() => import("./features/admin/pages/AdminAnalyticsPage"));
 const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSettingsPage"));
+const OrganizationsPage = lazy(() => import("./features/organizations/pages/OrganizationsPage"));
+const OrganizationDetailPage = lazy(() => import("./features/organizations/pages/OrganizationDetailPage"));
 const ProfileActivityPage = lazy(() => import("./features/user/pages/ProfileActivityPage"));
 const ProfilePollsPage = lazy(() => import("./features/user/pages/ProfilePollsPage"));
 const SettingsPage = lazy(() => import("./features/user/pages/SettingsPage"));
@@ -258,6 +260,24 @@ function AppRoutes() {
         <Route path="settings" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminSettingsPage />
+          </Suspense>
+        } />
+      </Route>
+
+      {/* Organization routes */}
+      <Route path="/organizations" element={
+        <ProtectedRoute>
+          <RootLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={
+          <Suspense fallback={<LoadingFallback />}>
+            <OrganizationsPage />
+          </Suspense>
+        } />
+        <Route path=":slug" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <OrganizationDetailPage />
           </Suspense>
         } />
       </Route>
