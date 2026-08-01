@@ -283,13 +283,16 @@ export default function CreatePollPage() {
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-surface-900 mb-2">
                 <CalendarClock size={16} className="text-surface-400" />
-                End date <span className="text-surface-400 font-normal">(optional)</span>
+                Expiration date <span className="text-danger-500 font-normal">*</span>
               </label>
               <input
                 type="datetime-local"
-                {...register("endsAt")}
+                {...register("expiresAt")}
                 className="input w-full"
               />
+              {errors.expiresAt && (
+                <p className="mt-1 text-xs text-danger-500">{errors.expiresAt.message}</p>
+              )}
             </div>
           </div>
         </Card>

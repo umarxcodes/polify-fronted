@@ -14,10 +14,7 @@ export const createPollSchema = z.object({
   isAnonymous: z.boolean().optional(),
   allowMultipleVotes: z.boolean().optional(),
   allowComments: z.boolean().optional(),
-  endsAt: z.string().optional().refine(
-    (val) => !val || !isNaN(Date.parse(val)),
-    { message: "Please provide a valid date and time" }
-  ),
+  expiresAt: z.string().min(1, "Expiration date is required"),
   category: z.string().optional(),
 });
 
