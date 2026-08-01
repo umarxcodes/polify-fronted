@@ -10,4 +10,8 @@ export const pollApi = {
     apiClient.post(`/votes/polls/${pollId}/vote`, { options: [optionId] }),
   getVotes: (pollId) => apiClient.get(`/polls/${pollId}/results`),
   getPollResults: (pollId) => apiClient.get(`/polls/${pollId}/results`),
+  checkBookmarkStatus: (pollId) =>
+    apiClient.get(`/bookmarks/${pollId}/status`),
+  addBookmark: (pollId) => apiClient.post(`/bookmarks/${pollId}`),
+  removeBookmark: (pollId) => apiClient.delete(`/bookmarks/${pollId}`),
 };

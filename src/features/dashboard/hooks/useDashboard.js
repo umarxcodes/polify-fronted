@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { apiClient } from "../../../lib/axios";
 
 export function useDashboard() {
@@ -63,16 +62,6 @@ export function usePollDetail(pollId) {
   });
 }
 
-export function useBookmarksQuery() {
-  return useQuery({
-    queryKey: ["bookmarks"],
-    queryFn: async () => {
-      const response = await apiClient.get("/bookmarks");
-      return response.data?.data || response.data;
-    },
-  });
-}
-
 export function useNotificationsQuery() {
   return useQuery({
     queryKey: ["notifications"],
@@ -106,37 +95,6 @@ export function useAdminDashboard() {
     queryFn: async () => {
       const response = await apiClient.get("/admin/dashboard");
       return response.data?.data || response.data;
-    },
-  });
-}
-
-export function useToggleBookmark(pollId) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const response = await apiClient.post(`/bookmarks/${pollId}`);
-      return response.data;
-    },
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["bookmarks"] });
-      const previous = queryClient.getQueryData(["bookmarks"]);
-      queryClient.setQueryData(["bookmarks"], (old) => {
-        const list = old?.bookmarks || old || [];
-        const exists = list.some(b => b.pollId === pollId);
-        if (exists) {
-          return { ...old, bookmarks: list.filter(b => b.pollId !== pollId) };
-        }
-        return { ...old, bookmarks: [...list, { pollId, savedAt: new Date() }] };
-      });
-      return { previous };
-    },
-    onError: (err, _, context) => {
-      queryClient.setQueryData(["bookmarks"], context.previous);
-      toast.error("Failed to update bookmark", { description: err.message });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
   });
 }

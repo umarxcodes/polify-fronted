@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Vote,
   Bookmark,
@@ -11,16 +11,16 @@ import {
   TrendingUp,
   Check,
   Plus,
-} from 'lucide-react'
-import { pollApi } from '../api/pollApi'
-import { apiClient } from '../../../lib/axios'
-import { Card } from '../../../components/ui/Card'
-import { Button } from '../../../components/ui/Button'
-import { Badge } from '../../../components/ui/Badge'
-import { Avatar } from '../../../components/ui/Avatar'
-import { Dropdown } from '../../../components/ui/Dropdown'
-import { toast } from 'sonner'
-import { Skeleton } from '../../../components/ui/Skeleton'
+} from "lucide-react";
+import { pollService } from "../services/pollService";
+import { useBookmarkStatus, useBookmarks } from "../../bookmarks/hooks/useBookmarks";
+import { Card } from "../../../components/ui/Card";
+import { Button } from "../../../components/ui/Button";
+import { Badge } from "../../../components/ui/Badge";
+import { Avatar } from "../../../components/ui/Avatar";
+import { Dropdown } from "../../../components/ui/Dropdown";
+import { toast } from "sonner";
+import { Skeleton } from "../../../components/ui/Skeleton";
 
 function PollOption({
   option,
@@ -42,13 +42,12 @@ function PollOption({
         relative w-full text-left p-4 rounded-xl border-2 transition-all duration-300
         ${
           isSelected
-            ? 'border-brand-500 bg-brand-50/50'
-            : 'border-surface-200 hover:border-surface-300 bg-white hover:shadow-sm'
+            ? "border-brand-500 bg-brand-50/50"
+            : "border-surface-200 hover:border-surface-300 bg-white hover:shadow-sm"
         }
-        ${disabled ? 'cursor-default' : 'cursor-pointer'}
+        ${disabled ? "cursor-default" : "cursor-pointer"}
       `}
     >
-      {/* Progress bar */}
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
@@ -59,7 +58,7 @@ function PollOption({
         }}
         className={`
           absolute inset-0 rounded-xl origin-left
-          ${isWinner ? 'bg-gradient-to-r from-brand-500/10 to-brand-600/5' : 'bg-surface-50'}
+          ${isWinner ? "bg-gradient-to-r from-brand-500/10 to-brand-600/5" : "bg-surface-50"}
         `}
       />
 
@@ -68,7 +67,7 @@ function PollOption({
           <div
             className={`
             w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0
-            ${isSelected ? 'border-brand-500 bg-brand-500' : 'border-surface-300'}
+            ${isSelected ? "border-brand-500 bg-brand-500" : "border-surface-300"}
           `}
           >
             {isSelected && <Check size={14} className="text-white" />}
@@ -85,14 +84,13 @@ function PollOption({
             </Badge>
           )}
           <span
-            className={`text-sm font-bold ${isSelected ? 'text-brand-600' : 'text-surface-900'}`}
+            className={`text-sm font-bold ${isSelected ? "text-brand-600" : "text-surface-900"}`}
           >
             {percentage}%
           </span>
         </div>
       </div>
 
-      {/* Vote count bar */}
       <div className="mt-2 h-1.5 bg-surface-100 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
@@ -104,82 +102,82 @@ function PollOption({
           }}
           className={`
             h-full rounded-full
-            ${isWinner ? 'bg-gradient-to-r from-brand-500 to-brand-600' : 'bg-surface-300'}
+            ${isWinner ? "bg-gradient-to-r from-brand-500 to-brand-600" : "bg-surface-300"}
           `}
         />
       </div>
     </motion.button>
-  )
+  );
 }
 
 function PollCard({ poll, index = 0 }) {
-  const [selectedOption, setSelectedOption] = useState(null)
-  const [hasVoted, setHasVoted] = useState(false)
-  const [voteCount, setVoteCount] = useState(poll.totalVotes || 0)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [showComments, setShowComments] = useState(false)
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [voteCount, setVoteCount] = useState(poll.totalVotes || 0);
+  const [showComments, setShowComments] = useState(false);
 
-  const totalVotes =
-    voteCount ||
-    poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) ||
-    1
-  const maxVotes = Math.max(
-    ...(poll.options?.map((opt) => opt.votes || 0) || [1])
-  )
+  const { data: bookmarkData } = useBookmarkStatus(poll._id);
+  const isBookmarked = bookmarkData?.saved || false;
 
-  const handleVote = async (optionId) => {
-    if (hasVoted) return
-
-    try {
-      await apiClient.post(`/votes/polls/${poll._id}/vote`, {
-        options: [optionId],
-      })
-      setSelectedOption(optionId)
-      setHasVoted(true)
-      setVoteCount((prev) => prev + 1)
-      toast.success('Vote recorded!', {
-        description: 'Your vote has been counted.',
-        duration: 3000,
-      })
-    } catch (error) {
-      toast.error('Voting failed', {
-        description: error.response?.data?.message || error.message || 'Please try again.',
-      })
-    }
-  }
+  const { addBookmark, removeBookmark } = useBookmarks();
 
   const handleBookmark = async () => {
     try {
       if (isBookmarked) {
-        await apiClient.delete(`/bookmarks/${poll._id}`)
-        setIsBookmarked(false)
-        toast.success('Removed from bookmarks')
+        await removeBookmark(poll._id);
+        toast.success("Removed from bookmarks");
       } else {
-        await apiClient.post(`/bookmarks/${poll._id}`)
-        setIsBookmarked(true)
-        toast.success('Added to bookmarks')
+        await addBookmark(poll._id);
+        toast.success("Added to bookmarks");
       }
     } catch (error) {
-      toast.error('Action failed', { description: error.message })
+      toast.error("Action failed", { description: error.message });
     }
-  }
+  };
+
+  const handleVote = async (optionId) => {
+    if (hasVoted) return;
+
+    try {
+      await pollService.vote(poll._id, optionId);
+      setSelectedOption(optionId);
+      setHasVoted(true);
+      setVoteCount((prev) => prev + 1);
+      toast.success("Vote recorded!", {
+        description: "Your vote has been counted.",
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("Voting failed", {
+        description: error.response?.data?.message || error.message || "Please try again.",
+      });
+    }
+  };
 
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(
         window.location.origin + `/polls/${poll._id}`
-      )
-      toast.success('Link copied to clipboard!')
+      );
+      toast.success("Link copied to clipboard!");
     } catch {
-      toast.error('Failed to copy link')
+      toast.error("Failed to copy link");
     }
-  }
+  };
 
   const menuItems = [
-    { label: 'Save poll', icon: Bookmark, onClick: handleBookmark },
-    { label: 'Share', icon: Share2, onClick: handleShare },
-    { label: 'Report', icon: MoreHorizontal, onClick: () => {} },
-  ]
+    { label: "Save poll", icon: Bookmark, onClick: handleBookmark },
+    { label: "Share", icon: Share2, onClick: handleShare },
+    { label: "Report", icon: MoreHorizontal, onClick: () => {} },
+  ];
+
+  const totalVotes =
+    voteCount ||
+    poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) ||
+    1;
+  const maxVotes = Math.max(
+    ...(poll.options?.map((opt) => opt.votes || 0) || [1])
+  );
 
   return (
     <motion.div
@@ -192,19 +190,18 @@ function PollCard({ poll, index = 0 }) {
       }}
     >
       <Card hover className="overflow-hidden">
-        {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Avatar
-                fallback={poll.createdBy?.name?.[0] || 'U'}
+                fallback={poll.createdBy?.name?.[0] || "U"}
                 color="brand"
                 size="md"
               />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-surface-900">
-                    {poll.createdBy?.name || 'Anonymous'}
+                    {poll.createdBy?.name || "Anonymous"}
                   </span>
                   {poll.isVerified && (
                     <Badge variant="primary" size="sm" dot>
@@ -214,11 +211,11 @@ function PollCard({ poll, index = 0 }) {
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-surface-500">
-                    @{poll.createdBy?.username || 'user'}
+                    @{poll.createdBy?.username || "user"}
                   </span>
                   <span className="text-xs text-surface-400">·</span>
                   <span className="text-xs text-surface-500">
-                    {poll.timeAgo || '2h'}
+                    {poll.timeAgo || "2h"}
                   </span>
                 </div>
               </div>
@@ -234,10 +231,9 @@ function PollCard({ poll, index = 0 }) {
             />
           </div>
 
-          {/* Category & Title */}
           <div className="mt-4">
             <Badge variant="secondary" size="sm" className="mb-3">
-              {poll.category || 'General'}
+              {poll.category || "General"}
             </Badge>
             <h3 className="text-lg font-semibold text-surface-900 leading-tight">
               {poll.title}
@@ -250,14 +246,13 @@ function PollCard({ poll, index = 0 }) {
           </div>
         </div>
 
-        {/* Poll options */}
         <div className="px-6 pb-4">
           <div className="space-y-3">
             {poll.options?.map((option, idx) => {
               const percentage = hasVoted
                 ? Math.round((option.votes / totalVotes) * 100)
-                : 0
-              const isWinner = hasVoted && option.votes === maxVotes
+                : 0;
+              const isWinner = hasVoted && option.votes === maxVotes;
               return (
                 <PollOption
                   key={option._id || idx}
@@ -269,12 +264,11 @@ function PollCard({ poll, index = 0 }) {
                   disabled={hasVoted}
                   index={idx}
                 />
-              )
+              );
             })}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-surface-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -294,13 +288,13 @@ function PollCard({ poll, index = 0 }) {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant={isBookmarked ? 'primary' : 'ghost'}
+                variant={isBookmarked ? "primary" : "ghost"}
                 size="sm"
                 onClick={handleBookmark}
                 icon={
                   <Bookmark
                     size={16}
-                    fill={isBookmarked ? 'currentColor' : 'none'}
+                    fill={isBookmarked ? "currentColor" : "none"}
                   />
                 }
               />
@@ -315,26 +309,26 @@ function PollCard({ poll, index = 0 }) {
         </div>
       </Card>
     </motion.div>
-  )
+  );
 }
 
 export default function PollFeedPage() {
-  const [filter, setFilter] = useState('latest')
+  const [filter, setFilter] = useState("latest");
 
   const {
-    data: polls,
+    data: polls = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['polls', filter],
+    queryKey: ["polls", filter],
     queryFn: async () => {
-      const response = await pollApi.getPolls({ filter })
-      const body = response.data
-      const received = body?.data?.polls || body?.polls || []
-      return received.map((poll, idx) => ({ ...poll, index: idx }))
+      const response = await pollService.getAllPolls({ filter });
+      const body = response.data;
+      const received = body?.data?.polls || body?.polls || [];
+      return received.map((poll, idx) => ({ ...poll, index: idx }));
     },
     staleTime: 30000,
-  })
+  });
 
   if (isLoading) {
     return (
@@ -358,7 +352,7 @@ export default function PollFeedPage() {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -370,15 +364,14 @@ export default function PollFeedPage() {
         <h3 className="text-lg font-semibold text-surface-900 mb-1">
           Failed to load polls
         </h3>
-        <p className="text-sm text-surface-500 mb-4">{error}</p>
+        <p className="text-sm text-surface-500 mb-4">{error.message}</p>
         <Button onClick={() => window.location.reload()}>Try again</Button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-surface-900">Poll Feed</h2>
@@ -393,9 +386,8 @@ export default function PollFeedPage() {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-2">
-        {['latest', 'trending', 'ending-soon', 'popular'].map((f) => (
+        {["latest", "trending", "ending-soon", "popular"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -403,23 +395,22 @@ export default function PollFeedPage() {
               px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
               ${
                 filter === f
-                  ? 'bg-brand-500 text-white shadow-sm shadow-brand-500/25'
-                  : 'bg-white text-surface-600 border border-surface-200 hover:border-surface-300'
+                  ? "bg-brand-500 text-white shadow-sm shadow-brand-500/25"
+                  : "bg-white text-surface-600 border border-surface-200 hover:border-surface-300"
               }
             `}
           >
-            {f === 'latest'
-              ? 'Latest'
-              : f === 'trending'
-                ? 'Trending'
-                : f === 'ending-soon'
-                  ? 'Ending Soon'
-                  : 'Popular'}
+            {f === "latest"
+              ? "Latest"
+              : f === "trending"
+                ? "Trending"
+                : f === "ending-soon"
+                  ? "Ending Soon"
+                  : "Popular"}
           </button>
         ))}
       </div>
 
-      {/* Poll list */}
       <div className="space-y-4">
         {polls.length > 0 ? (
           polls.map((poll, idx) => (
@@ -445,5 +436,5 @@ export default function PollFeedPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

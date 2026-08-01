@@ -7,7 +7,6 @@ import {
   Clock,
   Eye,
   Share2,
-  Bookmark,
   TrendingUp,
   ArrowLeft,
   MoreHorizontal,
@@ -31,6 +30,7 @@ import VoteResults from '../../voting/components/VoteResults'
 import { useComments } from '../../comments/hooks/useComments'
 import CommentCard from '../../comments/components/CommentCard'
 import CommentInput from '../../comments/components/CommentInput'
+import BookmarkButton from '../../bookmarks/components/BookmarkButton'
 
 function PollOption({
   option,
@@ -522,11 +522,7 @@ export default function PollDetailPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<Bookmark size={16} />}
-                />
+                <BookmarkButton pollId={poll._id} />
                 <Button variant="ghost" size="sm" icon={<Share2 size={16} />} />
               </div>
             </div>
