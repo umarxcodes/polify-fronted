@@ -1,8 +1,14 @@
-import { getComments, createComment, updateComment, deleteComment } from "../api/commentsApi";
+import { getComments, createComment, updateComment, deleteComment, replyToComment, likeComment, unlikeComment, pinComment, unpinComment, reportComment } from "../api/commentsApi";
 
 export const commentService = {
   getComments,
   createComment,
   updateComment,
   deleteComment,
+  replyToComment,
+  likeComment,
+  unlikeComment,
+  pinComment,
+  unpinComment,
+  reportComment,
 };

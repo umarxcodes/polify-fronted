@@ -1,8 +1,28 @@
-import { getAdminStats, getUsers, updateUserRole, getSystemHealth } from "../api/adminApi";
+import { getAdminStats, getUsers, getUser, updateUserRole, suspendUser, unsuspendUser, deleteUser, getPolls, deletePoll, restorePoll, featurePoll, closePoll, getComments, deleteComment, restoreComment, getCategories, createCategory, updateCategory, deleteCategory, restoreCategory, getAuditLogs, getAnalytics, getSystemHealth, updateSettings } from "../api/adminApi";
 
 export const adminService = {
   getAdminStats,
   getUsers,
+  getUser,
   updateUserRole,
+  suspendUser,
+  unsuspendUser,
+  deleteUser,
+  getPolls,
+  deletePoll,
+  restorePoll,
+  featurePoll,
+  closePoll,
+  getComments,
+  deleteComment,
+  restoreComment,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  restoreCategory,
+  getAuditLogs,
+  getAnalytics,
   getSystemHealth,
+  updateSettings,
 };

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   MoreHorizontal,
   Flag,
+  MessageCircle,
+  Send,
 } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
@@ -20,6 +22,7 @@ import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Dropdown } from "../../../components/ui/Dropdown";
+import { Input } from "../../../components/ui/Input";
 import { toast } from "sonner";
 
 function PollOption({ option, percentage, isSelected, isWinner, onSelect, disabled, index }) {
@@ -97,11 +100,33 @@ function PollOption({ option, percentage, isSelected, isWinner, onSelect, disabl
   );
 }
 
+function CommentItem({ comment, onReply }) {
+  return (
+    <div className="flex gap-3 p-4 rounded-xl hover:bg-surface-50 transition-colors">
+      <Avatar fallback={comment.user?.name?.[0] || "U"} size="sm" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-surface-900">{comment.user?.name || "Anonymous"}</span>
+          <span className="text-xs text-surface-400">{comment.timeAgo || "Recently"}</span>
+        </div>
+        <p className="text-sm text-surface-600 mt-1">{comment.text}</p>
+        <div className="flex items-center gap-3 mt-2">
+          <button className="text-xs text-surface-500 hover:text-brand-600 transition-colors">Like</button>
+          <button className="text-xs text-surface-500 hover:text-brand-600 transition-colors" onClick={() => onReply?.(comment._id)}>Reply</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PollDetailPage() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
 
   const { data: poll, isLoading, error } = useQuery({
     queryKey: ["poll", id],
@@ -112,22 +137,53 @@ export default function PollDetailPage() {
     enabled: !!id,
   });
 
-  const handleVote = async (optionId) => {
-    if (hasVoted) return;
+  const { data: comments } = useQuery({
+    queryKey: ["comments", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/comments/polls/${id}/comments`);
+      return data?.data || data || [];
+    },
+    enabled: !!id && showComments,
+  });
 
-    try {
-      await apiClient.post(`/votes/polls/${id}/vote`, { optionId });
-      setSelectedOption(optionId);
-      setHasVoted(true);
-      setVoteCount(prev => prev + 1);
-      toast.success("Vote recorded!", {
-        description: "Your vote has been counted.",
-      });
-    } catch (error) {
-      toast.error("Voting failed", {
-        description: error.message || "Please try again.",
-      });
-    }
+  const voteMutation = useMutation({
+    mutationFn: ({ optionId, action }) => {
+      if (action === "vote") return apiClient.post(`/votes/polls/${id}/vote`, { optionId });
+      if (action === "change") return apiClient.patch(`/votes/polls/${id}/vote`, { optionId });
+      return apiClient.delete(`/votes/polls/${id}/vote`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["poll", id] });
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+      if (variables.action === "vote" || variables.action === "change") {
+        setSelectedOption(variables.optionId);
+        setHasVoted(true);
+        setVoteCount(prev => prev + 1);
+      }
+      toast.success("Vote recorded!");
+    },
+    onError: () => toast.error("Voting failed"),
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (text) => apiClient.post(`/comments/polls/${id}/comments`, { text }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", id] });
+      setNewComment("");
+      toast.success("Comment added");
+    },
+    onError: () => toast.error("Failed to add comment"),
+  });
+
+  const handleVote = (optionId) => {
+    if (hasVoted) return;
+    voteMutation.mutate({ optionId, action: "vote" });
+  };
+
+  const handleComment = (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    commentMutation.mutate(newComment);
   };
 
   if (isLoading) {
@@ -166,6 +222,7 @@ export default function PollDetailPage() {
 
   const totalVotes = voteCount || poll.totalVotes || poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 1;
   const maxVotes = Math.max(...(poll.options?.map(opt => opt.votes || 0) || [1]));
+  const commentsList = comments?.comments || comments || [];
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -257,6 +314,13 @@ export default function PollDetailPage() {
                   <Eye size={16} />
                   <span className="font-medium">{poll.views?.toLocaleString() || 0} views</span>
                 </span>
+                <button
+                  onClick={() => setShowComments(!showComments)}
+                  className="flex items-center gap-1.5 text-sm text-surface-500 hover:text-brand-600 transition-colors"
+                >
+                  <MessageCircle size={16} />
+                  <span className="font-medium">{poll.commentsCount || commentsList.length || 0}</span>
+                </button>
                 <span className="flex items-center gap-1.5 text-sm text-surface-500">
                   <Clock size={16} />
                   <span className="font-medium">{poll.endsAt ? `Ends ${new Date(poll.endsAt).toLocaleDateString()}` : "No end date"}</span>
@@ -270,6 +334,39 @@ export default function PollDetailPage() {
           </div>
         </Card>
       </motion.div>
+
+      {/* Comments Section */}
+      {showComments && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-surface-900 mb-4">Comments</h3>
+            <form onSubmit={handleComment} className="flex gap-3 mb-6">
+              <Input
+                placeholder="Write a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" size="sm" icon={<Send size={16} />} disabled={!newComment.trim()}>
+                Post
+              </Button>
+            </form>
+            <div className="space-y-1">
+              {commentsList.length > 0 ? (
+                commentsList.map((comment) => (
+                  <CommentItem key={comment._id} comment={comment} />
+                ))
+              ) : (
+                <p className="text-sm text-surface-500 text-center py-4">No comments yet. Be the first to comment!</p>
+              )}
+            </div>
+          </Card>
+        </motion.div>
+      )}
     </div>
   );
 }

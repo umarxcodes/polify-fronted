@@ -1,15 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../api/authApi";
-import { useAuth } from "../../../../contexts/AuthContext";
+import { apiClient } from "../../../lib/axios";
+import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
 
 export function useLogin() {
-  const { login } = useAuth();
+  const { establishSession } = useAuth();
 
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (res) => {
-      login(res.data.data.user);
+      const session = res?.data?.data || res?.data;
+      if (session?.accessToken) {
+        establishSession(session);
+      }
       toast.success("Welcome back!");
     },
     onError: (error) => {
@@ -27,13 +31,13 @@ export function useRegister() {
 }
 
 export function useLogout() {
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authApi.logout,
     onSettled: () => {
-      logout();
+      signOut();
       queryClient.clear();
     },
   });
@@ -42,7 +46,10 @@ export function useLogout() {
 export function useCurrentUser() {
   return useQuery({
     queryKey: ["auth", "me"],
-    queryFn: authApi.getMe,
+    queryFn: async () => {
+      const res = await authApi.getMe();
+      return res?.data?.data?.user || res?.data?.user || res?.data;
+    },
     retry: false,
   });
 }
@@ -51,14 +58,14 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: authApi.updateProfile,
+    mutationFn: (payload) => apiClient.put("/users/profile", payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["auth"] }),
   });
 }
 
 export function useChangePassword() {
   return useMutation({
-    mutationFn: authApi.changePassword,
+    mutationFn: (payload) => apiClient.put("/settings/password", payload),
   });
 }
 
@@ -72,7 +79,7 @@ export function useForgotPassword() {
 
 export function useResetPassword() {
   return useMutation({
-    mutationFn: ({ token, data }) => authApi.resetPassword(token, data),
+    mutationFn: (payload) => authApi.resetPassword(payload),
     onSuccess: () => toast.success("Password reset successful"),
     onError: (error) => toast.error(error.response?.data?.message || "Reset failed"),
   });
@@ -88,7 +95,7 @@ export function useVerifyEmail() {
 
 export function useResendVerification() {
   return useMutation({
-    mutationFn: authApi.resendVerification,
+    mutationFn: authApi.resendOtp,
     onSuccess: () => toast.success("Verification email resent"),
     onError: (error) => toast.error(error.response?.data?.message || "Resend failed"),
   });

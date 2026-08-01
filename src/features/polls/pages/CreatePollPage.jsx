@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { createPollSchema } from "../schemas/pollSchemas";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, GripVertical, Clock, Check } from "lucide-react";
@@ -10,18 +10,6 @@ import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { Card } from "../../../components/ui/Card";
 import { toast } from "sonner";
-
-const createPollSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title must be under 200 characters"),
-  description: z.string().max(1000, "Description must be under 1000 characters").optional(),
-  options: z.array(z.object({ text: z.string().min(1, "Option cannot be empty") })).min(2, "At least 2 options required").max(10, "Maximum 10 options allowed"),
-  category: z.string().optional(),
-  isAnonymous: z.boolean().optional(),
-  allowMultipleVotes: z.boolean().optional(),
-  allowComments: z.boolean().optional(),
-  endsAt: z.string().optional(),
-});
-
 
 const categories = [
   { value: "Product", label: "Product", icon: "🎯" },

@@ -13,7 +13,12 @@ export const createPollSchema = z.object({
     .max(10, "No more than 10 options allowed"),
   isAnonymous: z.boolean().optional(),
   allowMultipleVotes: z.boolean().optional(),
-  endsAt: z.string().datetime().optional(),
+  allowComments: z.boolean().optional(),
+  endsAt: z.string().optional().refine(
+    (val) => !val || !isNaN(Date.parse(val)),
+    { message: "Please provide a valid date and time" }
+  ),
+  category: z.string().optional(),
 });
 
 export const updatePollSchema = createPollSchema.partial();

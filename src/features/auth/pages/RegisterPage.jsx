@@ -4,27 +4,30 @@ import { Camera, Eye, EyeOff, UserRound, ArrowRight } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from "../schemas/authSchemas";
-import { authService } from "../services/authService";
+import { useRegister } from "../hooks/useAuthMutations";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const registerMutation = useRegister();
   const { register, handleSubmit, setValue, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(registerSchema), defaultValues: { name: "", username: "", email: "", password: "", confirmPassword: "", terms: false },
   });
   const image = useWatch({ control, name: "profileImage" });
 
-  const onSubmit = async (data) => {
+  const onSubmit = (data) => {
     setServerError("");
-    try {
-      await authService.register(data);
-      toast.success("Account created — verify your email to continue.");
-      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
-    } catch (error) {
-      setServerError(error.response?.data?.message || error.message || "Registration failed. Please try again.");
-    }
+    registerMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success("Account created — verify your email to continue.");
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      },
+      onError: (error) => {
+        setServerError(error.response?.data?.message || error.message || "Registration failed. Please try again.");
+      },
+    });
   };
 
   return (
@@ -42,7 +45,7 @@ export default function RegisterPage() {
         <label className="field">CONFIRM PASSWORD<input type={showPassword ? "text" : "password"} placeholder="Repeat your password" autoComplete="new-password" {...register("confirmPassword")} />{errors.confirmPassword && <small>{errors.confirmPassword.message}</small>}</label>
         <label className="check terms-check"><input type="checkbox" {...register("terms")} /><span>I agree to the <Link to="/terms">Terms of Service</Link> and <Link to="/privacy">Privacy Policy</Link>.</span></label>
         {errors.terms && <small className="field-error">{errors.terms.message}</small>}
-        <button className="auth-submit" disabled={isSubmitting}>{isSubmitting ? "Creating account…" : <>Create account <ArrowRight size={18} /></>}</button>
+        <button className="auth-submit" disabled={isSubmitting || registerMutation.isPending}>{isSubmitting || registerMutation.isPending ? "Creating account…" : <>Create account <ArrowRight size={18} /></>}</button>
       </form>
       <p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p>
     </div>

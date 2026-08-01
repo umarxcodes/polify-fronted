@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useParams } from "react-router-dom";
 import {
   User,
   Settings,
@@ -6,6 +6,8 @@ import {
   Bookmark,
   Vote,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../lib/axios";
 
 const tabs = [
   { icon: User, label: "Profile", href: "/profile" },
@@ -16,6 +18,38 @@ const tabs = [
 ];
 
 export default function ProfileLayout() {
+  const { username } = useParams();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["profile", username],
+    queryFn: async () => {
+      const endpoint = username ? `/users/${username}` : "/users/me";
+      const { data } = await apiClient.get(endpoint);
+      return data?.data || data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface-50">
+        <div className="relative bg-gradient-to-br from-brand-500/10 via-surface-50 to-violet-500/10 border-b border-surface-200/60">
+          <div className="max-w-4xl mx-auto px-6 py-12">
+            <div className="flex items-end gap-6">
+              <div className="w-24 h-24 rounded-2xl bg-surface-200 animate-pulse" />
+              <div className="flex-1 space-y-3">
+                <div className="h-8 w-48 bg-surface-200 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-surface-200 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = user?.name || "User";
+  const displayUsername = user?.username || "user";
+  const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2);
+
   return (
     <div className="min-h-screen bg-surface-50">
       {/* Profile header */}
@@ -28,7 +62,7 @@ export default function ProfileLayout() {
               style={{ animation: "scaleIn 0.4s ease-out" }}
             >
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-brand-500/25">
-                AM
+                {initials}
               </div>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success-500 rounded-full border-4 border-surface-50" />
             </div>
@@ -37,13 +71,13 @@ export default function ProfileLayout() {
                 className="text-2xl font-bold text-surface-900"
                 style={{ animation: "fadeInUp 0.4s ease-out 0.1s both" }}
               >
-                Alex Morgan
+                {displayName}
               </h1>
               <p
                 className="text-surface-500 mt-1"
                 style={{ animation: "fadeInUp 0.4s ease-out 0.15s both" }}
               >
-                @alexmorgan
+                @{displayUsername}
               </p>
             </div>
           </div>
@@ -54,10 +88,10 @@ export default function ProfileLayout() {
             style={{ animation: "fadeInUp 0.4s ease-out 0.2s both" }}
           >
             {[
-              { label: "Polls", value: "142" },
-              { label: "Votes", value: "1.2k" },
-              { label: "Followers", value: "892" },
-              { label: "Following", value: "234" },
+              { label: "Polls", value: user?.stats?.polls || 0 },
+              { label: "Votes", value: user?.stats?.votes || 0 },
+              { label: "Followers", value: user?.stats?.followers || 0 },
+              { label: "Following", value: user?.stats?.following || 0 },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-2xl font-bold text-surface-900">{stat.value}</p>
@@ -98,7 +132,7 @@ export default function ProfileLayout() {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <Outlet />
+        <Outlet context={{ user }} />
       </main>
 
       <style>{`

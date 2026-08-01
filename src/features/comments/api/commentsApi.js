@@ -5,18 +5,47 @@ export const getComments = async (pollId) => {
   return data;
 };
 
-export const createComment = async (payload) => {
-  const { pollId, ...comment } = payload;
+export const createComment = async (pollId, comment) => {
   const { data } = await apiClient.post(`/comments/polls/${pollId}/comments`, comment);
   return data;
 };
 
-export const updateComment = async (id, payload) => {
-  const { data } = await apiClient.patch(`/comments/${id}`, payload);
+export const updateComment = async (commentId, payload) => {
+  const { data } = await apiClient.patch(`/comments/${commentId}`, payload);
   return data;
 };
 
-export const deleteComment = async (id) => {
-  const { data } = await apiClient.delete(`/comments/${id}`);
+export const deleteComment = async (commentId) => {
+  const { data } = await apiClient.delete(`/comments/${commentId}`);
+  return data;
+};
+
+export const replyToComment = async (commentId, reply) => {
+  const { data } = await apiClient.post(`/comments/${commentId}/replies`, reply);
+  return data;
+};
+
+export const likeComment = async (commentId) => {
+  const { data } = await apiClient.post(`/comments/${commentId}/like`);
+  return data;
+};
+
+export const unlikeComment = async (commentId) => {
+  const { data } = await apiClient.delete(`/comments/${commentId}/like`);
+  return data;
+};
+
+export const pinComment = async (commentId) => {
+  const { data } = await apiClient.patch(`/comments/${commentId}/pin`);
+  return data;
+};
+
+export const unpinComment = async (commentId) => {
+  const { data } = await apiClient.delete(`/comments/${commentId}/pin`);
+  return data;
+};
+
+export const reportComment = async (commentId, reason) => {
+  const { data } = await apiClient.post(`/comments/${commentId}/report`, { reason });
   return data;
 };

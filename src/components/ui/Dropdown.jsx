@@ -53,7 +53,7 @@ export const Dropdown = ({ trigger, items, align = 'left', width = 'auto' }) => 
                     ${item.danger ? 'text-danger-600 hover:bg-danger-50' : 'text-surface-700'}
                   `}
                 >
-                  {item.icon && <span className="text-surface-400">{item.icon}</span>}
+                  {item.icon && <span className="text-surface-400"><item.icon size={16} /></span>}
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.check && <Check size={16} className="text-brand-500" />}
                 </button>

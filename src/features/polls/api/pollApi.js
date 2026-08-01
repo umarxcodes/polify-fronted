@@ -8,5 +8,6 @@ export const pollApi = {
   deletePoll: (id) => apiClient.delete(`/polls/${id}`),
   vote: (pollId, optionId) =>
     apiClient.post(`/votes/polls/${pollId}/vote`, { optionId }),
-  getVotes: (pollId) => apiClient.get(`/votes/polls/${pollId}/results`),
+  getVotes: (pollId) => apiClient.get(`/polls/${pollId}/results`),
+  getPollResults: (pollId) => apiClient.get(`/polls/${pollId}/results`),
 };

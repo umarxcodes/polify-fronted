@@ -4,29 +4,29 @@ import { Eye, EyeOff, LockKeyhole, Mail, ArrowRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas/authSchemas";
-import { authService } from "../services/authService";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useLogin } from "../hooks/useAuthMutations";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { establishSession } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const loginMutation = useLogin();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(loginSchema), defaultValues: { identifier: "", password: "", rememberMe: false },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = (data) => {
     setServerError("");
-    try {
-      const session = await authService.login(data);
-      establishSession(session);
-      toast.success("Welcome back!");
-      navigate("/dashboard", { replace: true });
-    } catch (error) {
-      setServerError(error.response?.data?.message || error.message || "Unable to sign in. Please try again.");
-    }
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success("Welcome back!");
+        navigate("/dashboard", { replace: true });
+      },
+      onError: (error) => {
+        setServerError(error.response?.data?.message || error.message || "Unable to sign in. Please try again.");
+      },
+    });
   };
 
   return (
@@ -44,7 +44,7 @@ export default function LoginPage() {
           {errors.password && <small>{errors.password.message}</small>}
         </label>
         <label className="check"><input type="checkbox" {...register("rememberMe")} /> <span>Remember me</span></label>
-        <button className="auth-submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : <>Sign in <ArrowRight size={18} /></>}</button>
+        <button className="auth-submit" disabled={isSubmitting || loginMutation.isPending}>{isSubmitting || loginMutation.isPending ? "Signing in…" : <>Sign in <ArrowRight size={18} /></>}</button>
       </form>
       <div className="auth-divider"><span>New to Pollify?</span></div>
       <Link className="auth-outline" to="/register">Create a free account</Link>

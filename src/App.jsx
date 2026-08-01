@@ -19,6 +19,7 @@ const ResetPasswordPage = lazy(() => import("./features/auth/pages/ResetPassword
 const DashboardPage = lazy(() => import("./features/dashboard/pages/DashboardPage"));
 const PollsPage = lazy(() => import("./features/polls/pages/PollsPage"));
 const CreatePollPage = lazy(() => import("./features/polls/pages/CreatePollPage"));
+const EditPollPage = lazy(() => import("./features/polls/pages/EditPollPage"));
 const PollDetailPage = lazy(() => import("./features/polls/pages/PollDetailPage"));
 const SearchPage = lazy(() => import("./features/search/pages/SearchPage"));
 const AdminPage = lazy(() => import("./features/admin/pages/AdminPage"));
@@ -130,6 +131,11 @@ function AppRoutes() {
             <PollDetailPage />
           </Suspense>
         } />
+        <Route path="polls/:id/edit" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <EditPollPage />
+          </Suspense>
+        } />
         <Route path="search" element={
           <Suspense fallback={<LoadingFallback />}>
             <SearchPage />
@@ -186,6 +192,17 @@ function AppRoutes() {
         <Route path="settings" element={
           <Suspense fallback={<LoadingFallback />}>
             <SettingsPage />
+          </Suspense>
+        } />
+      </Route>
+      <Route path="/profile/:username" element={
+        <ProtectedRoute>
+          <ProfileLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={
+          <Suspense fallback={<LoadingFallback />}>
+            <ProfileActivityPage />
           </Suspense>
         } />
       </Route>

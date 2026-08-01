@@ -144,9 +144,9 @@ function PollCard({ poll, index = 0 }) {
   };
 
   const menuItems = [
-    { label: "Save poll", icon: <Bookmark size={16} />, onClick: handleBookmark },
-    { label: "Share", icon: <Share2 size={16} />, onClick: handleShare },
-    { label: "Report", icon: <MoreHorizontal size={16} />, onClick: () => {} },
+    { label: "Save poll", icon: Bookmark, onClick: handleBookmark },
+    { label: "Share", icon: Share2, onClick: handleShare },
+    { label: "Report", icon: MoreHorizontal, onClick: () => {} },
   ];
 
   return (

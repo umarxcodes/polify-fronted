@@ -1,7 +1,10 @@
-import { getReports, createReport, updateReportStatus } from "../api/reportsApi";
+import { getReports, createReport, getReportById, reviewReport, resolveReport, rejectReport } from "../api/reportsApi";
 
 export const reportService = {
   getReports,
   createReport,
-  updateReportStatus,
+  getReportById,
+  reviewReport,
+  resolveReport,
+  rejectReport,
 };

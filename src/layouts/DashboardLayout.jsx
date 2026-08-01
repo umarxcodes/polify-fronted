@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart3,
@@ -13,6 +13,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../lib/axios";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Home", href: "/dashboard" },
@@ -25,13 +27,22 @@ const navItems = [
 
 const bottomNavItems = [
   { icon: Settings, label: "Settings", href: "/profile/settings" },
-  { icon: HelpCircle, label: "Help", href: "/help" },
+  { icon: HelpCircle, label: "Help", href: "/dashboard" },
 ];
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const { data: unread } = useQuery({
+    queryKey: ["notifications", "unread"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/notifications/unread-count");
+      return data?.data || data || 0;
+    },
+  });
 
   return (
     <div className="flex min-h-screen bg-surface-50">
@@ -126,9 +137,9 @@ export default function DashboardLayout() {
           {/* User profile */}
           <div className="mt-2 pt-2 border-t border-surface-200/60">
             <div className="flex items-center gap-3 px-3 py-2">
-<div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
-                </div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+              </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-surface-900 truncate">
@@ -175,21 +186,34 @@ export default function DashboardLayout() {
                   type="text"
                   placeholder="Search..."
                   className="flex-1 bg-transparent text-sm text-surface-900 placeholder:text-surface-400 outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const query = e.target.value.trim();
+                      if (query) navigate(`/search?q=${encodeURIComponent(query)}`);
+                    }
+                  }}
                 />
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-surface-400 bg-surface-200 rounded">⌘K</kbd>
               </div>
 
               {/* Notifications */}
-              <button className="relative p-2 rounded-xl text-surface-500 hover:text-surface-700 hover:bg-surface-100 transition-colors">
+              <button
+                onClick={() => navigate("/notifications")}
+                className="relative p-2 rounded-xl text-surface-500 hover:text-surface-700 hover:bg-surface-100 transition-colors"
+              >
                 <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full" />
+                {typeof unread === "number" && unread > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
               </button>
 
               {/* User menu */}
               <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 transition-colors">
-<div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
-	                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
-	                </div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
+                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+                </div>
               </button>
             </div>
           </div>

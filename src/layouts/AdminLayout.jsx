@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../lib/axios";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -23,16 +25,24 @@ const navItems = [
   { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 
-const stats = [
-  { icon: Users, label: "Total Users", value: "12,847", change: "+12%" },
-  { icon: FileText, label: " Active Polls", value: "3,291", change: "+8%" },
-  { icon: Flag, label: "Reports", value: "23", change: "-5%" },
-  { icon: BarChart3, label: "Engagement", value: "89%", change: "+3%" },
-];
-
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+
+  const { data: stats } = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/admin/dashboard");
+      return data?.data?.stats || data?.stats || {};
+    },
+  });
+
+  const statItems = [
+    { icon: Users, label: "Total Users", value: stats?.totalUsers?.toLocaleString() || "0" },
+    { icon: FileText, label: "Active Polls", value: stats?.totalPolls?.toLocaleString() || "0" },
+    { icon: Flag, label: "Reports", value: stats?.pendingReports?.toLocaleString() || "0" },
+    { icon: BarChart3, label: "Engagement", value: `${stats?.engagementRate || 0}%` },
+  ];
 
   return (
     <div className="flex min-h-screen bg-surface-950">
@@ -92,7 +102,7 @@ export default function AdminLayout() {
             <div className="p-3 rounded-xl bg-surface-800/50 border border-surface-700/50">
               <p className="text-xs font-medium text-surface-400 mb-2">Quick Stats</p>
               <div className="space-y-2">
-                {stats.slice(0, 3).map((stat) => (
+                {statItems.slice(0, 3).map((stat) => (
                   <div key={stat.label} className="flex items-center justify-between">
                     <span className="text-xs text-surface-400">{stat.label}</span>
                     <span className="text-xs font-semibold text-surface-200">{stat.value}</span>

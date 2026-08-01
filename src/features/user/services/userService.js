@@ -1,7 +1,11 @@
-import { getProfile, updateProfile, getUserById } from "../api/userApi";
+import { getProfile, getUserStats, getPublicProfile, updateProfile, uploadProfileImage, deleteProfileImage, deleteAccount } from "../api/userApi";
 
 export const userService = {
   getProfile,
+  getUserStats,
+  getPublicProfile,
   updateProfile,
-  getUserById,
+  uploadProfileImage,
+  deleteProfileImage,
+  deleteAccount,
 };

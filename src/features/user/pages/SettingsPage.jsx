@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Save, User, Bell, Shield, Palette } from "lucide-react";
@@ -6,6 +6,7 @@ import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
 import { toast } from "sonner";
+import { apiClient } from "../../../lib/axios";
 
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -17,11 +18,13 @@ const tabs = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isDirty },
+    reset,
   } = useForm({
     defaultValues: {
       name: "",
@@ -33,21 +36,79 @@ export default function SettingsPage() {
     },
   });
 
-  const onSubmit = async () => {
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await apiClient.get("/users/me");
+        const user = data?.data || data;
+        if (user) {
+          reset({
+            name: user.name || "",
+            username: user.username || "",
+            email: user.email || "",
+            bio: user.bio || "",
+            location: user.location || "",
+            website: user.website || "",
+          });
+        }
+      } catch {
+        toast.error("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [reset]);
+
+  const onSubmit = async (data) => {
     setSaving(true);
     try {
-      // await apiClient.patch("/users/profile", data);
+      await apiClient.patch("/users/profile", data);
       toast.success("Settings saved!", {
         description: "Your changes have been updated.",
       });
     } catch (error) {
       toast.error("Failed to save settings", {
-        description: error.message,
+        description: error.response?.data?.message || error.message,
       });
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl">
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-surface-200 rounded animate-pulse mb-2" />
+          <div className="h-4 w-96 bg-surface-200 rounded animate-pulse" />
+        </div>
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="md:w-64 flex-shrink-0">
+            <Card className="p-2">
+              <div className="space-y-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-10 bg-surface-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </Card>
+          </div>
+          <div className="flex-1">
+            <Card className="p-6">
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-24 bg-surface-200 rounded animate-pulse" />
+                    <div className="h-10 w-full bg-surface-100 rounded-lg animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl">

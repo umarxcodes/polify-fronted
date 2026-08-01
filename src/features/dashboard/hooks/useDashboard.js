@@ -63,7 +63,7 @@ export function usePollDetail(pollId) {
   });
 }
 
-export function useBookmarks() {
+export function useBookmarksQuery() {
   return useQuery({
     queryKey: ["bookmarks"],
     queryFn: async () => {
@@ -73,7 +73,7 @@ export function useBookmarks() {
   });
 }
 
-export function useNotifications() {
+export function useNotificationsQuery() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
@@ -83,7 +83,7 @@ export function useNotifications() {
   });
 }
 
-export function useSearch(query) {
+export function useSearchQuery(query) {
   return useQuery({
     queryKey: ["search", query],
     queryFn: async () => {

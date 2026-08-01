@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import {
   TrendingUp,
   Vote,
@@ -12,16 +12,23 @@ import {
   BarChart3,
   Flame,
   Search,
-} from "lucide-react";
-import { Link } from "react-router-dom";
-import { apiClient } from "../../../lib/axios";
-import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
-import { Skeleton } from "../../../components/ui/Skeleton";
-import { Badge } from "../../../components/ui/Badge";
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { apiClient } from '../../../lib/axios'
+import { Card } from '../../../components/ui/Card'
+import { Button } from '../../../components/ui/Button'
+import { Skeleton } from '../../../components/ui/Skeleton'
+import { Badge } from '../../../components/ui/Badge'
+
+const formatNumber = (value) => Number(value || 0).toLocaleString()
+const formatDate = (value) => {
+  if (!value) return 'Recently'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString()
+}
 
 function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
-  const isPositive = change?.startsWith("+");
+  const isPositive = change?.startsWith('+')
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -36,24 +43,34 @@ function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
             </div>
             <div>
               <p className="text-sm font-medium text-surface-500">{label}</p>
-              <p className="text-2xl font-bold text-surface-900 mt-0.5">{value}</p>
+              <p className="text-2xl font-bold text-surface-900 mt-0.5">
+                {value}
+              </p>
             </div>
           </div>
           {change && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
-              isPositive ? "bg-success-50 text-success-700" : "bg-danger-50 text-danger-700"
-            }`}>
-              {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
+                isPositive
+                  ? 'bg-success-50 text-success-700'
+                  : 'bg-danger-50 text-danger-700'
+              }`}
+            >
+              {isPositive ? (
+                <ArrowUpRight size={14} />
+              ) : (
+                <ArrowDownRight size={14} />
+              )}
               {change}
             </div>
           )}
         </div>
       </Card>
     </motion.div>
-  );
+  )
 }
 
-function ChartCard({ title, children, className = "" }) {
+function ChartCard({ title, children, className = '' }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -63,15 +80,19 @@ function ChartCard({ title, children, className = "" }) {
       <Card className={`p-6 ${className}`}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-base font-semibold text-surface-900">{title}</h3>
+            <h3 className="text-base font-semibold text-surface-900">
+              {title}
+            </h3>
             <p className="text-sm text-surface-500 mt-0.5">Live data</p>
           </div>
-          <Badge variant="primary" dot>Live</Badge>
+          <Badge variant="primary" dot>
+            Live
+          </Badge>
         </div>
         {children}
       </Card>
     </motion.div>
-  );
+  )
 }
 
 function ActivityItem({ poll, delay = 0 }) {
@@ -86,28 +107,49 @@ function ActivityItem({ poll, delay = 0 }) {
         <Vote size={14} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-surface-900 truncate">{poll.title}</p>
-        <p className="text-xs text-surface-500 mt-0.5">{poll.votes} votes · {poll.timeAgo}</p>
+        <p className="text-sm font-medium text-surface-900 truncate">
+          {poll.title}
+        </p>
+        <p className="text-xs text-surface-500 mt-0.5">
+          {poll.votes} votes · {poll.timeAgo}
+        </p>
       </div>
-      <Badge variant="secondary" size="sm">{poll.category}</Badge>
+      <Badge variant="secondary" size="sm">
+        {poll.category}
+      </Badge>
     </motion.div>
-  );
+  )
 }
 
 export default function DashboardPage() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["dashboard"],
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['dashboard', 'overview'],
     queryFn: async () => {
-      const [statsRes, pollsRes] = await Promise.all([
-        apiClient.get("/analytics/dashboard"),
-        apiClient.get("/search/latest"),
-      ]);
+      const [statsRes, latestRes, trendingRes] = await Promise.all([
+        apiClient.get('/analytics/dashboard'),
+        apiClient.get('/search/latest'),
+        apiClient.get('/search/trending'),
+      ])
+
+      const stats = statsRes.data?.data || statsRes.data || {}
+      const latestPolls =
+        latestRes.data?.data?.polls ||
+        latestRes.data?.polls ||
+        latestRes.data ||
+        []
+      const trendingPolls =
+        trendingRes.data?.data?.polls ||
+        trendingRes.data?.polls ||
+        trendingRes.data ||
+        []
+
       return {
-        stats: statsRes.data?.data || statsRes.data,
-        polls: pollsRes.data?.data?.polls || pollsRes.data?.polls || [],
-      };
+        stats,
+        recentPolls: Array.isArray(latestPolls) ? latestPolls : [],
+        trendingPolls: Array.isArray(trendingPolls) ? trendingPolls : [],
+      }
     },
-  });
+  })
 
   if (error) {
     return (
@@ -115,21 +157,34 @@ export default function DashboardPage() {
         <div className="w-16 h-16 rounded-2xl bg-danger-50 flex items-center justify-center text-danger-500 mb-4">
           <Activity size={28} />
         </div>
-        <h3 className="text-lg font-semibold text-surface-900 mb-1">Failed to load dashboard</h3>
+        <h3 className="text-lg font-semibold text-surface-900 mb-1">
+          Failed to load dashboard
+        </h3>
         <p className="text-sm text-surface-500 mb-4">{error.message}</p>
-        <Button onClick={() => window.location.reload()}>Try again</Button>
+        <Button onClick={() => refetch()}>Try again</Button>
       </div>
-    );
+    )
   }
 
-  const stats = data?.stats || {};
-  const polls = data?.polls || [];
+  const stats = data?.stats || {}
+  const recentPolls = data?.recentPolls || []
+  const trendingPolls = data?.trendingPolls || []
 
   const quickActions = [
-    { icon: Plus, label: "Create Poll", href: "/polls/create", variant: "primary" },
-    { icon: Search, label: "Explore", href: "/search", variant: "secondary" },
-    { icon: BarChart3, label: "Analytics", href: "/analytics", variant: "secondary" },
-  ];
+    {
+      icon: Plus,
+      label: 'Create Poll',
+      href: '/polls/create',
+      variant: 'primary',
+    },
+    { icon: Search, label: 'Explore', href: '/search', variant: 'secondary' },
+    {
+      icon: BarChart3,
+      label: 'Analytics',
+      href: '/analytics',
+      variant: 'secondary',
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -140,8 +195,12 @@ export default function DashboardPage() {
         className="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Dashboard</h1>
-          <p className="text-surface-500 mt-1">Welcome back! Here's what's happening in your community.</p>
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-surface-500 mt-1">
+            Welcome back! Here's what's happening in your community.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {quickActions.map((action) => (
@@ -172,10 +231,46 @@ export default function DashboardPage() {
           ))
         ) : (
           <>
-            <StatCard icon={Vote} label="Total Votes" value={stats.totalVotes?.toLocaleString() || "0"} change="+12%" delay={0} />
-            <StatCard icon={FileText} label="Active Polls" value={stats.activePolls?.toLocaleString() || "0"} change="+8%" delay={0.05} />
-            <StatCard icon={Users} label="Participants" value={stats.totalUsers?.toLocaleString() || "0"} change="+24%" delay={0.1} />
-            <StatCard icon={TrendingUp} label="Engagement" value={`${stats.engagementRate || 0}%`} change="+5%" delay={0.15} />
+            <StatCard
+              icon={FileText}
+              label="Total Polls"
+              value={formatNumber(stats.totalPolls)}
+              change={`${stats.completionRate ?? 0}% active`}
+              delay={0}
+            />
+            <StatCard
+              icon={Vote}
+              label="Total Votes"
+              value={formatNumber(stats.totalVotes)}
+              change={`${stats.avgVotes ?? 0} avg`}
+              delay={0.05}
+            />
+            <StatCard
+              icon={Users}
+              label="Most Popular"
+              value={
+                stats.mostPopularPoll?.title
+                  ? stats.mostPopularPoll.title
+                  : 'No polls yet'
+              }
+              change={
+                stats.mostPopularPoll?.totalVotes
+                  ? `${formatNumber(stats.mostPopularPoll.totalVotes)} votes`
+                  : 'No activity'
+              }
+              delay={0.1}
+            />
+            <StatCard
+              icon={TrendingUp}
+              label="Engagement"
+              value={stats.completionRate ? `${stats.completionRate}%` : '0%'}
+              change={
+                stats.leastPopularPoll?.title
+                  ? `Best: ${stats.leastPopularPoll.title}`
+                  : 'No data'
+              }
+              delay={0.15}
+            />
           </>
         )}
       </div>
@@ -198,15 +293,19 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            ) : polls.length > 0 ? (
+            ) : recentPolls.length > 0 ? (
               <div className="divide-y divide-surface-100">
-                {polls.slice(0, 5).map((poll, index) => (
-                  <ActivityItem key={poll._id || index} poll={{
-                    title: poll.title,
-                    votes: poll.totalVotes?.toLocaleString() || "0",
-                    timeAgo: "Recently",
-                    category: poll.category || "General",
-                  }} delay={index * 0.05} />
+                {recentPolls.slice(0, 5).map((poll, index) => (
+                  <ActivityItem
+                    key={poll._id || index}
+                    poll={{
+                      title: poll.title || 'Untitled poll',
+                      votes: formatNumber(poll.totalVotes || poll.votes || 0),
+                      timeAgo: formatDate(poll.createdAt || poll.updatedAt),
+                      category: poll.category || poll.type || 'General',
+                    }}
+                    delay={index * 0.05}
+                  />
                 ))}
               </div>
             ) : (
@@ -214,9 +313,16 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 rounded-xl bg-surface-100 flex items-center justify-center text-surface-400 mx-auto mb-3">
                   <FileText size={24} />
                 </div>
-                <p className="text-sm text-surface-500">No polls yet. Create your first poll to get started!</p>
+                <p className="text-sm text-surface-500">
+                  No polls yet. Create your first poll to get started!
+                </p>
                 <Link to="/polls/create">
-                  <Button variant="primary" size="sm" className="mt-4" icon={Plus}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="mt-4"
+                    icon={Plus}
+                  >
                     Create Poll
                   </Button>
                 </Link>
@@ -238,16 +344,11 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : trendingPolls.length > 0 ? (
               <div className="space-y-3">
-                {[
-                  { topic: "Remote Work", count: "2.4k", trend: "+12%" },
-                  { topic: "AI Tools", count: "1.8k", trend: "+8%" },
-                  { topic: "Design Systems", count: "1.2k", trend: "+5%" },
-                  { topic: "Leadership", count: "956", trend: "+3%" },
-                ].map((item, index) => (
+                {trendingPolls.slice(0, 4).map((poll, index) => (
                   <motion.div
-                    key={item.topic}
+                    key={poll._id || poll.title}
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + index * 0.05 }}
@@ -257,14 +358,33 @@ export default function DashboardPage() {
                       <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
                         <Flame size={14} />
                       </div>
-                      <span className="text-sm font-medium text-surface-900">{item.topic}</span>
+                      <div className="min-w-0">
+                        <span className="block text-sm font-medium text-surface-900 truncate">
+                          {poll.title || 'Untitled poll'}
+                        </span>
+                        <span className="text-xs text-surface-500">
+                          {poll.creator?.name ||
+                            poll.creator?.username ||
+                            'Community'}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-surface-900">{item.count}</span>
-                      <span className="text-xs font-medium text-success-600">{item.trend}</span>
+                      <span className="text-sm font-semibold text-surface-900">
+                        {formatNumber(poll.totalVotes || 0)}
+                      </span>
+                      <span className="text-xs font-medium text-success-600">
+                        {poll.trendingScore
+                          ? `${Math.round(poll.trendingScore)} pts`
+                          : 'Trending'}
+                      </span>
                     </div>
                   </motion.div>
                 ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-surface-200 p-4 text-sm text-surface-500">
+                No trending polls available right now.
               </div>
             )}
           </ChartCard>
@@ -273,10 +393,10 @@ export default function DashboardPage() {
           <ChartCard title="Quick Actions" delay={0.3}>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { icon: Plus, label: "New Poll", href: "/polls/create" },
-                { icon: Vote, label: "Vote", href: "/dashboard" },
-                { icon: Users, label: "Invite", href: "/dashboard" },
-                { icon: BarChart3, label: "Analytics", href: "/analytics" },
+                { icon: Plus, label: 'New Poll', href: '/polls/create' },
+                { icon: Vote, label: 'Vote', href: '/dashboard' },
+                { icon: Users, label: 'Invite', href: '/dashboard' },
+                { icon: BarChart3, label: 'Analytics', href: '/analytics' },
               ].map((action, index) => (
                 <Link key={action.label} to={action.href}>
                   <motion.div
@@ -290,7 +410,9 @@ export default function DashboardPage() {
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 flex items-center justify-center text-brand-600 mx-auto mb-2">
                       <action.icon size={18} />
                     </div>
-                    <span className="text-xs font-medium text-surface-700">{action.label}</span>
+                    <span className="text-xs font-medium text-surface-700">
+                      {action.label}
+                    </span>
                   </motion.div>
                 </Link>
               ))}
@@ -299,5 +421,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
