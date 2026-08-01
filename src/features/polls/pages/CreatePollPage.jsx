@@ -87,7 +87,7 @@ export default function CreatePollPage() {
       isAnonymous: data.isAnonymous || false,
       allowMultipleVotes: data.allowMultipleVotes || false,
       allowComments: data.allowComments !== false,
-      ...(data.endsAt ? { endsAt: data.endsAt } : {}),
+      expiresAt: data.expiresAt || "",
     };
 
     mutation.mutate(pollData, {
@@ -103,9 +103,21 @@ export default function CreatePollPage() {
         }
       },
       onError: (error) => {
+        const backendMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.errors
+            ?.map((e) => e?.message || e?.field)
+            .join(", ") ||
+          error.message ||
+          "Please try again.";
+
         toast.error("Failed to create poll", {
-          description: error.response?.data?.message || error.message || "Please try again.",
+          description: backendMessage,
         });
+
+        if (error?.response?.data?.errors) {
+          console.error("Create poll validation errors:", error.response.data.errors);
+        }
       },
     });
   };
