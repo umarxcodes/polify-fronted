@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import SettingsPage from '../features/user/pages/SettingsPage'
 
-const mockGet = vi.fn()
-const mockPatch = vi.fn()
+const { mockGet, mockPatch } = vi.hoisted(() => {
+  const get = vi.fn()
+  const patch = vi.fn()
+  return { mockGet: get, mockPatch: patch }
+})
 
 vi.mock('../lib/axios', () => ({
   apiClient: {

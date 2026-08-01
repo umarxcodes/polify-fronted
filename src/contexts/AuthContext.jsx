@@ -48,16 +48,22 @@ export function AuthProvider({ children }) {
         const session = await authService.refreshToken()
         if (!active) return
 
-        if (session?.accessToken) {
-          setAuthToken(session.accessToken)
-        } else {
+        if (!session?.accessToken) {
           clearAuth()
           return
         }
 
-        const currentUser = await authService.getMe()
-        if (active && currentUser) {
-          setUser(currentUser)
+        setAuthToken(session.accessToken)
+
+        try {
+          const currentUser = await authService.getMe()
+          if (active && currentUser) {
+            setUser(currentUser)
+          }
+        } catch {
+          if (active) {
+            setUser(null)
+          }
         }
       } catch {
         if (active) {
