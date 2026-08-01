@@ -1,4 +1,4 @@
-import { isValidElement } from 'react'
+import { resolveIcon } from './iconUtils'
 
 const variants = {
   primary:
@@ -18,19 +18,6 @@ const sizes = {
   md: 'h-10 px-4 text-sm',
   lg: 'h-12 px-6 text-base',
   xl: 'h-14 px-8 text-lg',
-}
-
-const resolveIcon = (icon, size = 16) => {
-  if (!icon) return null
-  if (isValidElement(icon)) return icon
-  if (
-    typeof icon === 'function' ||
-    (typeof icon === 'object' && icon && typeof icon.render === 'function')
-  ) {
-    const Component = icon
-    return <Component size={size} />
-  }
-  return null
 }
 
 export const Button = ({

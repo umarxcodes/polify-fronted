@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LockKeyhole, Mail, ArrowRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../schemas/authSchemas";
 import { useLogin } from "../hooks/useAuthMutations";
+import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
   const loginMutation = useLogin();
@@ -16,12 +18,17 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema), defaultValues: { identifier: "", password: "", rememberMe: false },
   });
 
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
+
   const onSubmit = (data) => {
     setServerError("");
     loginMutation.mutate(data, {
       onSuccess: () => {
         toast.success("Welcome back!");
-        navigate("/dashboard", { replace: true });
       },
       onError: (error) => {
         setServerError(error.response?.data?.message || error.message || "Unable to sign in. Please try again.");

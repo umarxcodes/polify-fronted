@@ -19,6 +19,7 @@ import { Card } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { Skeleton } from '../../../components/ui/Skeleton'
 import { Badge } from '../../../components/ui/Badge'
+import { resolveIcon } from '../../../components/ui/iconUtils'
 
 const formatNumber = (value) => Number(value || 0).toLocaleString()
 const formatDate = (value) => {
@@ -27,7 +28,14 @@ const formatDate = (value) => {
   return Number.isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString()
 }
 
-function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  change,
+  delay = 0,
+  compact = false,
+}) {
   const isPositive = change?.startsWith('+')
   return (
     <motion.div
@@ -35,31 +43,31 @@ function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card hover dark className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400">
-              <Icon size={22} strokeWidth={2} />
+      <Card hover dark className={`p-6 ${compact ? 'min-h-[140px]' : ''}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+              <Icon size={20} strokeWidth={2} />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-surface-400">{label}</p>
-              <p className="text-2xl font-bold text-white mt-0.5">
+              <p className="text-xl font-bold text-white mt-0.5 line-clamp-2">
                 {value}
               </p>
             </div>
           </div>
           {change && (
             <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
                 isPositive
                   ? 'bg-success-500/15 text-success-400'
                   : 'bg-danger-500/15 text-danger-400'
               }`}
             >
               {isPositive ? (
-                <ArrowUpRight size={14} />
+                <ArrowUpRight size={12} />
               ) : (
-                <ArrowDownRight size={14} />
+                <ArrowDownRight size={12} />
               )}
               {change}
             </div>
@@ -80,9 +88,7 @@ function ChartCard({ title, children, className = '' }) {
       <Card dark className={`p-6 ${className}`}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-base font-semibold text-white">
-              {title}
-            </h3>
+            <h3 className="text-base font-semibold text-white">{title}</h3>
             <p className="text-sm text-surface-400 mt-0.5">Live data</p>
           </div>
           <Badge variant="primary" dot>
@@ -208,13 +214,13 @@ export default function DashboardPage() {
             {quickActions.map((action) => (
               <Link key={action.label} to={action.href}>
                 <Button
-                  variant={action.variant === "primary" ? "default" : "outline"}
+                  variant={action.variant === 'primary' ? 'default' : 'outline'}
                   icon={action.icon}
                   size="sm"
                   className={
-                    action.variant === "primary"
-                      ? "bg-white text-brand-700 hover:bg-white/90 shadow-lg"
-                      : "border-white/30 text-white hover:bg-white/10"
+                    action.variant === 'primary'
+                      ? 'bg-white text-brand-700 hover:bg-white/90 shadow-lg'
+                      : 'border-white/30 text-white hover:bg-white/10'
                   }
                 >
                   {action.label}
@@ -271,6 +277,7 @@ export default function DashboardPage() {
                   : 'No activity'
               }
               delay={0.1}
+              compact
             />
             <StatCard
               icon={TrendingUp}
@@ -296,7 +303,10 @@ export default function DashboardPage() {
               <div className="p-4 space-y-2">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 p-3">
-                    <Skeleton dark className="w-8 h-8 rounded-lg flex-shrink-0" />
+                    <Skeleton
+                      dark
+                      className="w-8 h-8 rounded-lg flex-shrink-0"
+                    />
                     <div className="flex-1 space-y-2">
                       <Skeleton dark className="h-4 w-48" />
                       <Skeleton dark className="h-3 w-32" />
@@ -420,7 +430,7 @@ export default function DashboardPage() {
                     className="p-4 rounded-xl border border-surface-700 hover:border-brand-500/40 hover:bg-brand-500/10 transition-all text-center"
                   >
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 mx-auto mb-2">
-                      <action.icon size={18} />
+                      {resolveIcon(action.icon, 18)}
                     </div>
                     <span className="text-xs font-medium text-surface-300">
                       {action.label}

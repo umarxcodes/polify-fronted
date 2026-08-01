@@ -1,18 +1,5 @@
-import { isValidElement } from 'react'
 import { motion } from 'framer-motion'
-
-const resolveIcon = (icon, size = 18) => {
-  if (!icon) return null
-  if (isValidElement(icon)) return icon
-  if (
-    typeof icon === 'function' ||
-    (typeof icon === 'object' && icon && typeof icon.render === 'function')
-  ) {
-    const Component = icon
-    return <Component size={size} />
-  }
-  return null
-}
+import { resolveIcon } from './iconUtils'
 
 export const Input = ({
   error,
@@ -27,13 +14,17 @@ export const Input = ({
   return (
     <div className={`${className}`}>
       {label && (
-        <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-surface-300' : 'text-surface-700'}`}>
+        <label
+          className={`block text-sm font-medium mb-1.5 ${dark ? 'text-surface-300' : 'text-surface-700'}`}
+        >
           {label}
         </label>
       )}
       <div className="relative">
         {iconElement && (
-          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${dark ? 'text-surface-500' : 'text-surface-400'}`}>
+          <div
+            className={`absolute left-3 top-1/2 -translate-y-1/2 ${dark ? 'text-surface-500' : 'text-surface-400'}`}
+          >
             {iconElement}
           </div>
         )}
@@ -41,9 +32,10 @@ export const Input = ({
           className={`
           input w-full px-4 py-2.5 text-sm
           ${iconElement ? 'pl-10' : ''}
-          ${dark
-            ? 'bg-surface-800 border-surface-700 text-white placeholder:text-surface-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
-            : 'border-surface-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
+          ${
+            dark
+              ? 'bg-surface-800 border-surface-700 text-white placeholder:text-surface-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
+              : 'border-surface-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
           }
           ${error ? 'input-error border-danger-500' : ''}
           transition-all duration-200

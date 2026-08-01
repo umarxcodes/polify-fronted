@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updatePollSchema } from "../schemas/pollSchemas";
 import { usePollDetail } from "../hooks/usePollDetail";
@@ -32,8 +32,8 @@ export default function EditPollPage() {
 
   const {
     register,
+    control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -50,17 +50,20 @@ export default function EditPollPage() {
     },
   });
 
-  const watchedOptions = watch("options");
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "options",
+  });
 
   const addOption = () => {
-    if (watchedOptions.length < 10) {
-      setValue("options", [...watchedOptions, { text: "" }]);
+    if (fields.length < 10) {
+      append({ text: "" });
     }
   };
 
   const removeOption = (index) => {
-    if (watchedOptions.length > 2) {
-      setValue("options", watchedOptions.filter((_, i) => i !== index));
+    if (fields.length > 2) {
+      remove(index);
     }
   };
 
@@ -191,9 +194,9 @@ export default function EditPollPage() {
 
           <div className="space-y-3">
             <AnimatePresence>
-              {watchedOptions.map((option, index) => (
+              {fields.map((field, index) => (
                 <motion.div
-                  key={index}
+                  key={field.id}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -212,7 +215,7 @@ export default function EditPollPage() {
                       <p className="mt-1 text-xs text-danger-400">{errors.options[index].text.message}</p>
                     )}
                   </div>
-                  {watchedOptions.length > 2 && (
+                  {fields.length > 2 && (
                     <button
                       type="button"
                       onClick={() => removeOption(index)}
@@ -226,7 +229,7 @@ export default function EditPollPage() {
             </AnimatePresence>
           </div>
 
-          {watchedOptions.length < 10 && (
+          {fields.length < 10 && (
             <button
               type="button"
               onClick={addOption}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useState } from 'react'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   BarChart3,
@@ -11,38 +11,39 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../lib/axios";
+} from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useQuery } from '@tanstack/react-query'
+import { apiClient } from '../lib/axios'
+import { resolveIcon } from '../components/ui/iconUtils'
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Home", href: "/dashboard" },
-  { icon: Search, label: "Explore", href: "/search" },
-  { icon: Plus, label: "Create poll", href: "/polls/create" },
-  { icon: BarChart3, label: "Analytics", href: "/analytics" },
-  { icon: Bookmark, label: "Bookmarks", href: "/bookmarks" },
-  { icon: Bell, label: "Notifications", href: "/notifications", badge: 3 },
-];
+  { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
+  { icon: Search, label: 'Explore', href: '/search' },
+  { icon: Plus, label: 'Create poll', href: '/polls/create' },
+  { icon: BarChart3, label: 'Analytics', href: '/analytics' },
+  { icon: Bookmark, label: 'Bookmarks', href: '/bookmarks' },
+  { icon: Bell, label: 'Notifications', href: '/notifications', badge: 3 },
+]
 
 const bottomNavItems = [
-  { icon: Settings, label: "Settings", href: "/profile/settings" },
-  { icon: HelpCircle, label: "Help", href: "/dashboard" },
-];
+  { icon: Settings, label: 'Settings', href: '/profile/settings' },
+  { icon: HelpCircle, label: 'Help', href: '/dashboard' },
+]
 
 export default function DashboardLayout() {
-  const [collapsed, setCollapsed] = useState(false);
-  const { user } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false)
+  const { user } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const { data: unread } = useQuery({
-    queryKey: ["notifications", "unread"],
+    queryKey: ['notifications', 'unread'],
     queryFn: async () => {
-      const { data } = await apiClient.get("/notifications/unread-count");
-      return data?.data || data || 0;
+      const { data } = await apiClient.get('/notifications/unread-count')
+      return data?.data || data || 0
     },
-  });
+  })
 
   return (
     <div className="flex min-h-screen bg-surface-950 text-surface-100">
@@ -51,14 +52,23 @@ export default function DashboardLayout() {
         className={`
           fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-900 border-r border-surface-800
           transition-all duration-300 ease-out
-          ${collapsed ? "w-[72px]" : "w-[260px]"}
+          ${collapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
       >
         {/* Logo */}
         <div className="flex items-center h-16 px-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 20V10" />
                 <path d="M18 20V4" />
                 <path d="M6 20v-4" />
@@ -81,15 +91,19 @@ export default function DashboardLayout() {
               className={({ isActive }) =>
                 `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-brand-500/15 text-brand-400 shadow-sm shadow-brand-500/10"
-                    : "text-surface-400 hover:text-surface-200 hover:bg-surface-800"
+                    ? 'bg-brand-500/15 text-brand-400 shadow-sm shadow-brand-500/10'
+                    : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <div className={`relative flex-shrink-0 ${isActive ? "text-brand-400" : "text-surface-500 group-hover:text-surface-300"}`}>
-                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <div
+                    className={`relative flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`}
+                  >
+                    {resolveIcon(item.icon, 20, {
+                      strokeWidth: isActive ? 2.5 : 2,
+                    })}
                     {item.badge && (
                       <span className="absolute -top-1 -right-1.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {item.badge}
@@ -97,9 +111,7 @@ export default function DashboardLayout() {
                     )}
                   </div>
                   {!collapsed && (
-                    <span className="whitespace-nowrap">
-                      {item.label}
-                    </span>
+                    <span className="whitespace-nowrap">{item.label}</span>
                   )}
                 </>
               )}
@@ -116,18 +128,19 @@ export default function DashboardLayout() {
               className={({ isActive }) =>
                 `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-brand-500/15 text-brand-400"
-                    : "text-surface-400 hover:text-surface-200 hover:bg-surface-800"
+                    ? 'bg-brand-500/15 text-brand-400'
+                    : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={`flex-shrink-0 ${isActive ? "text-brand-400" : "text-surface-500 group-hover:text-surface-300"}`} />
+                  {resolveIcon(item.icon, 20, {
+                    strokeWidth: isActive ? 2.5 : 2,
+                    className: `flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`,
+                  })}
                   {!collapsed && (
-                    <span className="whitespace-nowrap">
-                      {item.label}
-                    </span>
+                    <span className="whitespace-nowrap">{item.label}</span>
                   )}
                 </>
               )}
@@ -138,15 +151,18 @@ export default function DashboardLayout() {
           <div className="mt-2 pt-2 border-t border-surface-800">
             <div className="flex items-center gap-3 px-3 py-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+                {(user?.name || 'U')
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')}
               </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">
-                    {user?.name || "User"}
+                    {user?.name || 'User'}
                   </p>
                   <p className="text-xs text-surface-400 truncate">
-                    @{user?.username || "user"}
+                    @{user?.username || 'user'}
                   </p>
                 </div>
               )}
@@ -158,7 +174,7 @@ export default function DashboardLayout() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="absolute -right-3 top-20 w-6 h-6 bg-surface-800 border border-surface-700 rounded-full flex items-center justify-center text-surface-400 hover:text-surface-200 hover:border-surface-600 shadow-sm transition-all"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
@@ -174,7 +190,7 @@ export default function DashboardLayout() {
           <div className="flex items-center justify-between h-full px-6">
             <div className="flex items-center gap-4">
               <h1 className="text-lg font-semibold text-white">
-                {location.pathname === "/dashboard" ? "Dashboard" : ""}
+                {location.pathname === '/dashboard' ? 'Dashboard' : ''}
               </h1>
             </div>
 
@@ -187,24 +203,27 @@ export default function DashboardLayout() {
                   placeholder="Search..."
                   className="flex-1 bg-transparent text-sm text-surface-100 placeholder:text-surface-500 outline-none"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const query = e.target.value.trim();
-                      if (query) navigate(`/search?q=${encodeURIComponent(query)}`);
+                    if (e.key === 'Enter') {
+                      const query = e.target.value.trim()
+                      if (query)
+                        navigate(`/search?q=${encodeURIComponent(query)}`)
                     }
                   }}
                 />
-                <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-surface-500 bg-surface-700 rounded">⌘K</kbd>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono text-surface-500 bg-surface-700 rounded">
+                  ⌘K
+                </kbd>
               </div>
 
               {/* Notifications */}
               <button
-                onClick={() => navigate("/notifications")}
+                onClick={() => navigate('/notifications')}
                 className="relative p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
               >
                 <Bell size={20} />
-                {typeof unread === "number" && unread > 0 && (
+                {typeof unread === 'number' && unread > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unread > 9 ? "9+" : unread}
+                    {unread > 9 ? '9+' : unread}
                   </span>
                 )}
               </button>
@@ -212,7 +231,10 @@ export default function DashboardLayout() {
               {/* User menu */}
               <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-800 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
-                  {(user?.name || "U").split(" ").map((n) => n[0]).join("")}
+                  {(user?.name || 'U')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')}
                 </div>
               </button>
             </div>
@@ -225,5 +247,5 @@ export default function DashboardLayout() {
         </main>
       </div>
     </div>
-  );
+  )
 }

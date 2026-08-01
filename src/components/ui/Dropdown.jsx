@@ -1,27 +1,31 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check } from 'lucide-react'
+import { resolveIcon } from './iconUtils'
 
-export const Dropdown = ({ trigger, items, align = 'left', width = 'auto' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+export const Dropdown = ({
+  trigger,
+  items,
+  align = 'left',
+  width = 'auto',
+}) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)}>
-        {trigger}
-      </div>
+      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
 
       <AnimatePresence>
         {isOpen && (
@@ -42,8 +46,8 @@ export const Dropdown = ({ trigger, items, align = 'left', width = 'auto' }) => 
                 <button
                   key={index}
                   onClick={() => {
-                    item.onClick?.();
-                    setIsOpen(false);
+                    item.onClick?.()
+                    setIsOpen(false)
                   }}
                   disabled={item.disabled}
                   className={`
@@ -53,7 +57,11 @@ export const Dropdown = ({ trigger, items, align = 'left', width = 'auto' }) => 
                     ${item.danger ? 'text-danger-600 hover:bg-danger-50' : 'text-surface-700'}
                   `}
                 >
-                  {item.icon && <span className="text-surface-400"><item.icon size={16} /></span>}
+                  {item.icon && (
+                    <span className="text-surface-400">
+                      {resolveIcon(item.icon, 16)}
+                    </span>
+                  )}
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.check && <Check size={16} className="text-brand-500" />}
                 </button>
@@ -63,7 +71,7 @@ export const Dropdown = ({ trigger, items, align = 'left', width = 'auto' }) => 
         )}
       </AnimatePresence>
     </div>
-  );
-};
+  )
+}
 
-export default Dropdown;
+export default Dropdown
