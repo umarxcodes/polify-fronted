@@ -42,7 +42,12 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const isRefreshRequest = originalRequest?.url === "/auth/refresh-token";
 
-    if (error.response?.status !== 401 || originalRequest?._retry || isRefreshRequest) {
+    if (
+      error.response?.status !== 401 ||
+      originalRequest?._retry ||
+      isRefreshRequest ||
+      !accessToken
+    ) {
       return Promise.reject(error);
     }
 

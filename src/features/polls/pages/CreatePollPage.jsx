@@ -125,17 +125,18 @@ export default function CreatePollPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Create Poll</h1>
-        <p className="text-surface-500 mt-2">Ask a question and let the community vote.</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Create Poll</h1>
+        <p className="text-surface-400 mt-2">Ask a question and let the community vote.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Card className="p-6">
-          <label className="flex items-center gap-2 text-sm font-semibold text-surface-900 mb-3">
-            <FileText size={18} className="text-brand-600" />
-            Question <span className="text-danger-500">*</span>
+        <Card dark className="p-6">
+          <label className="flex items-center gap-2 text-sm font-semibold text-surface-200 mb-3">
+            <FileText size={18} className="text-brand-400" />
+            Question <span className="text-danger-400">*</span>
           </label>
           <Input
+            dark
             {...register("title")}
             placeholder="What do you want to ask?"
             error={errors.title?.message}
@@ -144,25 +145,25 @@ export default function CreatePollPage() {
           <p className="mt-2 text-xs text-surface-500">Be specific and clear to get better responses.</p>
         </Card>
 
-        <Card className="p-6">
-          <label className="flex items-center gap-2 text-sm font-semibold text-surface-900 mb-3">
-            <MessageCircle size={18} className="text-brand-600" />
-            Description <span className="text-surface-400 font-normal">(optional)</span>
+        <Card dark className="p-6">
+          <label className="flex items-center gap-2 text-sm font-semibold text-surface-200 mb-3">
+            <MessageCircle size={18} className="text-brand-400" />
+            Description <span className="text-surface-500 font-normal">(optional)</span>
           </label>
           <textarea
             {...register("description")}
             placeholder="Add more context to your question..."
             rows={3}
-            className="input w-full px-4 py-3 text-sm resize-none"
+            className="input w-full px-4 py-3 text-sm resize-none bg-surface-800 border-surface-700 text-white placeholder:text-surface-500"
           />
           {errors.description && (
-            <p className="mt-1.5 text-xs text-danger-500">{errors.description.message}</p>
+            <p className="mt-1.5 text-xs text-danger-400">{errors.description.message}</p>
           )}
         </Card>
 
-        <Card className="p-6">
-          <label className="flex items-center gap-2 text-sm font-semibold text-surface-900 mb-3">
-            <Target size={18} className="text-brand-600" />
+        <Card dark className="p-6">
+          <label className="flex items-center gap-2 text-sm font-semibold text-surface-200 mb-3">
+            <Target size={18} className="text-brand-400" />
             Category
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -180,15 +181,15 @@ export default function CreatePollPage() {
                     flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all duration-200
                     ${
                       selectedCategory === category.value
-                        ? "border-brand-500 bg-brand-50 text-brand-700"
-                        : "border-surface-200 hover:border-surface-300 bg-white"
+                        ? "border-brand-500 bg-brand-500/15 text-brand-400"
+                        : "border-surface-700 hover:border-surface-600 bg-surface-800 text-surface-300"
                     }
                   `}
                 >
-                  <Icon size={18} className={selectedCategory === category.value ? "text-brand-600" : "text-surface-400"} />
+                  <Icon size={18} className={selectedCategory === category.value ? "text-brand-400" : "text-surface-500"} />
                   <span className="text-sm font-medium">{category.label}</span>
                   {selectedCategory === category.value && (
-                    <Check size={14} className="ml-auto text-brand-600" />
+                    <Check size={14} className="ml-auto text-brand-400" />
                   )}
                 </button>
               );
@@ -196,10 +197,10 @@ export default function CreatePollPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <label className="flex items-center gap-2 text-sm font-semibold text-surface-900 mb-1">
-            <Plus size={18} className="text-brand-600" />
-            Options <span className="text-danger-500">*</span>
+        <Card dark className="p-6">
+          <label className="flex items-center gap-2 text-sm font-semibold text-surface-200 mb-1">
+            <Plus size={18} className="text-brand-400" />
+            Options <span className="text-danger-400">*</span>
           </label>
           <p className="text-xs text-surface-500 mb-4">Add at least 2 options for people to choose from.</p>
 
@@ -213,24 +214,24 @@ export default function CreatePollPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="flex-shrink-0 text-surface-400 cursor-grab">
+                  <div className="flex-shrink-0 text-surface-500 cursor-grab">
                     <GripVertical size={18} />
                   </div>
                   <div className="flex-1">
                     <input
                       {...register(`options.${index}.text`)}
                       placeholder={`Option ${index + 1}`}
-                      className="input w-full"
+                      className="input w-full bg-surface-800 border-surface-700 text-white placeholder:text-surface-500"
                     />
                     {errors.options?.[index]?.text && (
-                      <p className="mt-1 text-xs text-danger-500">{errors.options[index].text.message}</p>
+                      <p className="mt-1 text-xs text-danger-400">{errors.options[index].text.message}</p>
                     )}
                   </div>
                   {watchedOptions.length > 2 && (
                     <button
                       type="button"
                       onClick={() => removeOption(index)}
-                      className="flex-shrink-0 p-2 rounded-lg text-surface-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                      className="flex-shrink-0 p-2 rounded-lg text-surface-500 hover:text-danger-400 hover:bg-danger-500/10 transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -244,7 +245,7 @@ export default function CreatePollPage() {
             <button
               type="button"
               onClick={addOption}
-              className="mt-4 flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
+              className="mt-4 flex items-center gap-2 text-sm font-medium text-brand-400 hover:text-brand-300 transition-colors"
             >
               <Plus size={18} />
               Add option
@@ -252,58 +253,58 @@ export default function CreatePollPage() {
           )}
 
           {errors.options && !Array.isArray(errors.options) && (
-            <p className="mt-2 text-xs text-danger-500">{errors.options.message}</p>
+            <p className="mt-2 text-xs text-danger-400">{errors.options.message}</p>
           )}
         </Card>
 
-        <Card className="p-6">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-surface-900 mb-4">
-            <Settings2 size={18} className="text-brand-600" />
+        <Card dark className="p-6">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-surface-200 mb-4">
+            <Settings2 size={18} className="text-brand-400" />
             Poll Settings
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-surface-900">Allow multiple votes</p>
+                <p className="text-sm font-medium text-surface-200">Allow multiple votes</p>
                 <p className="text-xs text-surface-500">Let users vote for multiple options</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" {...register("allowMultipleVotes")} className="sr-only peer" />
-                <div className="w-11 h-6 bg-surface-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-surface-900">Allow comments</p>
+                <p className="text-sm font-medium text-surface-200">Allow comments</p>
                 <p className="text-xs text-surface-500">Let users discuss this poll</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" {...register("allowComments")} className="sr-only peer" />
-                <div className="w-11 h-6 bg-surface-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-surface-900">Anonymous poll</p>
+                <p className="text-sm font-medium text-surface-200">Anonymous poll</p>
                 <p className="text-xs text-surface-500">Hide your identity from voters</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" {...register("isAnonymous")} className="sr-only peer" />
-                <div className="w-11 h-6 bg-surface-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
               </label>
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-surface-900 mb-2">
-                <CalendarClock size={16} className="text-surface-400" />
-                Expiration date <span className="text-danger-500 font-normal">*</span>
+              <label className="flex items-center gap-2 text-sm font-medium text-surface-200 mb-2">
+                <CalendarClock size={16} className="text-surface-500" />
+                Expiration date <span className="text-danger-400 font-normal">*</span>
               </label>
               <input
                 type="datetime-local"
                 {...register("expiresAt")}
-                className="input w-full"
+                className="input w-full bg-surface-800 border-surface-700 text-white placeholder:text-surface-500"
               />
               {errors.expiresAt && (
-                <p className="mt-1 text-xs text-danger-500">{errors.expiresAt.message}</p>
+                <p className="mt-1 text-xs text-danger-400">{errors.expiresAt.message}</p>
               )}
             </div>
           </div>
