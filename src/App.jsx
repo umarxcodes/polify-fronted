@@ -6,7 +6,6 @@ import { Skeleton } from "./components/ui/Skeleton";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import ProfileLayout from "./layouts/ProfileLayout";
 import RootLayout from "./layouts/RootLayout";
 import { ProtectedRoute, PublicRoute } from "./routes/ProtectedRoute";
 import { ROLES } from "./constants/routes";
@@ -32,10 +31,14 @@ const AdminAnalyticsPage = lazy(() => import("./features/admin/pages/AdminAnalyt
 const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSettingsPage"));
 const OrganizationsPage = lazy(() => import("./features/organizations/pages/OrganizationsPage"));
 const OrganizationDetailPage = lazy(() => import("./features/organizations/pages/OrganizationDetailPage"));
-const ProfileActivityPage = lazy(() => import("./features/user/pages/ProfileActivityPage"));
 const ProfilePollsPage = lazy(() => import("./features/user/pages/ProfilePollsPage"));
 const SettingsPage = lazy(() => import("./features/user/pages/SettingsPage"));
 const BookmarksPage = lazy(() => import("./features/bookmarks/pages/BookmarksPage"));
+const ProfilePage = lazy(() => import("./features/user/pages/ProfilePage"));
+const EditProfilePage = lazy(() => import("./features/user/pages/EditProfilePage"));
+const PublicProfilePage = lazy(() => import("./features/user/pages/PublicProfilePage"));
+const FollowersPage = lazy(() => import("./features/user/pages/FollowersPage"));
+const FollowingPage = lazy(() => import("./features/user/pages/FollowingPage"));
 const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage"));
 const AnalyticsPage = lazy(() => import("./features/analytics/pages/AnalyticsPage"));
 const ReportsPage = lazy(() => import("./features/reports/pages/ReportsPage"));
@@ -181,46 +184,44 @@ function AppRoutes() {
       {/* Profile routes */}
       <Route path="/profile" element={
         <ProtectedRoute>
-          <ProfileLayout />
+          <ProfilePage />
         </ProtectedRoute>
-      }>
-        <Route index element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileActivityPage />
-          </Suspense>
-        } />
-        <Route path="activity" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileActivityPage />
-          </Suspense>
-        } />
-        <Route path="polls" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfilePollsPage />
-          </Suspense>
-        } />
-        <Route path="bookmarks" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <BookmarksPage />
-          </Suspense>
-        } />
-        <Route path="settings" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <SettingsPage />
-          </Suspense>
-        } />
-      </Route>
+      } />
+      <Route path="/profile/edit" element={
+        <ProtectedRoute>
+          <EditProfilePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/polls" element={
+        <ProtectedRoute>
+          <ProfilePollsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/bookmarks" element={
+        <ProtectedRoute>
+          <BookmarksPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/settings" element={
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      } />
       <Route path="/profile/:username" element={
         <ProtectedRoute>
-          <ProfileLayout />
+          <PublicProfilePage />
         </ProtectedRoute>
-      }>
-        <Route index element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileActivityPage />
-          </Suspense>
-        } />
-      </Route>
+      } />
+      <Route path="/profile/:username/followers" element={
+        <ProtectedRoute>
+          <FollowersPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/:username/following" element={
+        <ProtectedRoute>
+          <FollowingPage />
+        </ProtectedRoute>
+      } />
 
       {/* Admin routes */}
       <Route path="/admin" element={
