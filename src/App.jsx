@@ -39,6 +39,7 @@ const BookmarksPage = lazy(() => import("./features/bookmarks/pages/BookmarksPag
 const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage"));
 const AnalyticsPage = lazy(() => import("./features/analytics/pages/AnalyticsPage"));
 const ReportsPage = lazy(() => import("./features/reports/pages/ReportsPage"));
+const VoteHistoryPage = lazy(() => import("./features/voting/pages/VoteHistoryPage"));
 
 function LoadingFallback() {
   return (
@@ -168,6 +169,11 @@ function AppRoutes() {
         <Route path="reports" element={
           <Suspense fallback={<LoadingFallback />}>
             <ReportsPage />
+          </Suspense>
+        } />
+        <Route path="votes/history" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <VoteHistoryPage />
           </Suspense>
         } />
       </Route>

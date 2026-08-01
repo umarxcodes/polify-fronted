@@ -143,7 +143,7 @@ function PollCard({ poll, index = 0 }) {
       })
     } catch (error) {
       toast.error('Voting failed', {
-        description: error.message || 'Please try again.',
+        description: error.response?.data?.message || error.message || 'Please try again.',
       })
     }
   }

@@ -14,6 +14,11 @@ import {
   Flag,
   MessageCircle,
   Send,
+  Lock,
+  Archive,
+  PlayCircle,
+  Ban,
+  Loader2,
 } from 'lucide-react'
 import { apiClient } from '../../../lib/axios'
 import { Card } from '../../../components/ui/Card'
@@ -24,6 +29,8 @@ import { Skeleton } from '../../../components/ui/Skeleton'
 import { Dropdown } from '../../../components/ui/Dropdown'
 import { Input } from '../../../components/ui/Input'
 import { toast } from 'sonner'
+import { useVoting } from '../../voting/hooks/useVoting'
+import VoteResults from '../../voting/components/VoteResults'
 
 function PollOption({
   option,
@@ -33,7 +40,10 @@ function PollOption({
   onSelect,
   disabled,
   index,
+  pollType,
 }) {
+  const isMultiple = pollType === 'multiple';
+  
   return (
     <motion.button
       initial={{ opacity: 0, x: -10 }}
@@ -88,6 +98,9 @@ function PollOption({
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </motion.div>
+            )}
+            {isMultiple && !isSelected && (
+              <div className="w-3 h-3 rounded-sm border-2 border-surface-300" />
             )}
           </div>
           <span className="text-sm font-medium text-surface-900">
@@ -154,19 +167,62 @@ function CommentItem({ comment, onReply }) {
   )
 }
 
+function PollStatusBadge({ status, expiresAt, startsAt }) {
+  const now = new Date();
+  const isExpired = expiresAt && new Date(expiresAt) < now;
+  const isScheduled = startsAt && new Date(startsAt) > now;
+
+  if (status === 'draft') {
+    return (
+      <Badge variant="secondary" size="sm" dot>
+        <Archive size={12} />
+        Draft
+      </Badge>
+    );
+  }
+  if (isExpired || status === 'expired') {
+    return (
+      <Badge variant="warning" size="sm" dot>
+        <Clock size={12} />
+        Expired
+      </Badge>
+    );
+  }
+  if (isScheduled) {
+    return (
+      <Badge variant="info" size="sm" dot>
+        <PlayCircle size={12} />
+        Scheduled
+      </Badge>
+    );
+  }
+  if (status === 'deleted') {
+    return (
+      <Badge variant="danger" size="sm" dot>
+        <Ban size={12} />
+        Deleted
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="success" size="sm" dot>
+      <Vote size={12} />
+      Active
+    </Badge>
+  );
+}
+
 export default function PollDetailPage() {
   const { id } = useParams()
   const queryClient = useQueryClient()
-  const [selectedOption, setSelectedOption] = useState(null)
-  const [hasVoted, setHasVoted] = useState(false)
-  const [voteCount, setVoteCount] = useState(0)
+  const [selectedOptions, setSelectedOptions] = useState([])
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState('')
 
   const {
     data: poll,
     isLoading,
-    error,
+    error: pollError,
   } = useQuery({
     queryKey: ['poll', id],
     queryFn: async () => {
@@ -176,7 +232,9 @@ export default function PollDetailPage() {
     enabled: !!id,
   })
 
-  const { data: comments } = useQuery({
+  const {
+    data: comments,
+  } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
       const { data } = await apiClient.get(`/comments/polls/${id}/comments`)
@@ -185,30 +243,14 @@ export default function PollDetailPage() {
     enabled: !!id && showComments,
   })
 
-  const voteMutation = useMutation({
-    mutationFn: ({ optionId, action }) => {
-      if (action === 'vote')
-        return apiClient.post(`/votes/polls/${id}/vote`, {
-          options: [optionId],
-        })
-      if (action === 'change')
-        return apiClient.patch(`/votes/polls/${id}/vote`, {
-          options: [optionId],
-        })
-      return apiClient.delete(`/votes/polls/${id}/vote`)
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['poll', id] })
-      queryClient.invalidateQueries({ queryKey: ['polls'] })
-      if (variables.action === 'vote' || variables.action === 'change') {
-        setSelectedOption(variables.optionId)
-        setHasVoted(true)
-        setVoteCount((prev) => prev + 1)
-      }
-      toast.success('Vote recorded!')
-    },
-    onError: () => toast.error('Voting failed'),
-  })
+  const {
+    myVote,
+    results,
+    castVote,
+    changeVote,
+    removeVote,
+    isVoting,
+  } = useVoting(id)
 
   const commentMutation = useMutation({
     mutationFn: (text) =>
@@ -222,9 +264,48 @@ export default function PollDetailPage() {
   })
 
   const handleVote = (optionId) => {
-    if (hasVoted) return
-    voteMutation.mutate({ optionId, action: 'vote' })
+    if (isVoting) return;
+    
+    const pollType = poll?.type || 'single';
+    const isMultiple = pollType === 'multiple';
+    
+    if (myVote) {
+      if (poll?.allowVoteChange) {
+        if (isMultiple) {
+          const newSelected = selectedOptions.includes(optionId)
+            ? selectedOptions.filter(id => id !== optionId)
+            : [...selectedOptions, optionId];
+          if (newSelected.length > 0) {
+            setSelectedOptions(newSelected);
+            changeVote(newSelected);
+          }
+        } else {
+          setSelectedOptions([optionId]);
+          changeVote([optionId]);
+        }
+      }
+      return;
+    }
+
+    if (isMultiple) {
+      const newSelected = selectedOptions.includes(optionId)
+        ? selectedOptions.filter(id => id !== optionId)
+        : [...selectedOptions, optionId];
+      setSelectedOptions(newSelected);
+      if (newSelected.length > 0) {
+        castVote(newSelected);
+      }
+    } else {
+      setSelectedOptions([optionId]);
+      castVote([optionId]);
+    }
   }
+
+  const handleRemoveVote = () => {
+    if (isVoting) return;
+    removeVote();
+    setSelectedOptions([]);
+  };
 
   const handleComment = (e) => {
     e.preventDefault()
@@ -251,7 +332,7 @@ export default function PollDetailPage() {
     )
   }
 
-  if (error || !poll) {
+  if (pollError || !poll) {
     return (
       <div className="max-w-3xl mx-auto text-center py-20">
         <div className="w-16 h-16 rounded-2xl bg-danger-50 flex items-center justify-center text-danger-500 mx-auto mb-4">
@@ -270,15 +351,45 @@ export default function PollDetailPage() {
     )
   }
 
-  const totalVotes =
-    voteCount ||
-    poll.totalVotes ||
-    poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) ||
-    1
-  const maxVotes = Math.max(
-    ...(poll.options?.map((opt) => opt.votes || 0) || [1])
-  )
-  const commentsList = comments?.comments || comments || []
+  const now = new Date();
+  const isExpired = poll.expiresAt && new Date(poll.expiresAt) < now;
+  const isScheduled = poll.startsAt && new Date(poll.startsAt) > now;
+  const isLocked = poll.status === 'draft' || poll.status === 'deleted';
+  const canVote = poll.status === 'active' && !isExpired && !isScheduled && !isLocked;
+  const hasVoted = !!myVote;
+  const isMultiple = poll.type === 'multiple';
+  const displayResults = results || {};
+  
+  const totalVotes = displayResults.totalVotes || poll.totalVotes || 0;
+  const resultOptions = displayResults.options || poll.options?.map(opt => ({
+    optionId: opt._id,
+    text: opt.text,
+    votes: opt.votes || 0,
+    percentage: 0,
+  })) || [];
+
+  const maxVotes = Math.max(...resultOptions.map(opt => opt.votes || 0), 1);
+
+  const getStatusMessage = () => {
+    if (isLocked) return {
+      icon: Lock,
+      title: poll.status === 'draft' ? 'This poll is a draft' : 'This poll has been deleted',
+      description: poll.status === 'draft' ? 'The poll creator hasn\'t published this poll yet.' : 'This poll is no longer available.',
+    };
+    if (isScheduled) return {
+      icon: PlayCircle,
+      title: 'This poll hasn\'t started yet',
+      description: `This poll will open on ${new Date(poll.startsAt).toLocaleDateString()}.`,
+    };
+    if (isExpired) return {
+      icon: Clock,
+      title: 'This poll has expired',
+      description: `This poll ended on ${new Date(poll.expiresAt).toLocaleDateString()}.`,
+    };
+    return null;
+  };
+
+  const statusMessage = getStatusMessage();
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -326,26 +437,33 @@ export default function PollDetailPage() {
                   </div>
                 </div>
               </div>
-              <Dropdown
-                trigger={
-                  <button className="p-2 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors">
-                    <MoreHorizontal size={18} />
-                  </button>
-                }
-                items={[
-                  {
-                    label: 'Share',
-                    icon: <Share2 size={16} />,
-                    onClick: () => {},
-                  },
-                  {
-                    label: 'Report',
-                    icon: <Flag size={16} />,
-                    onClick: () => {},
-                  },
-                ]}
-                align="right"
-              />
+              <div className="flex items-center gap-2">
+                <PollStatusBadge
+                  status={poll.status}
+                  expiresAt={poll.expiresAt}
+                  startsAt={poll.startsAt}
+                />
+                <Dropdown
+                  trigger={
+                    <button className="p-2 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors">
+                      <MoreHorizontal size={18} />
+                    </button>
+                  }
+                  items={[
+                    {
+                      label: 'Share',
+                      icon: <Share2 size={16} />,
+                      onClick: () => {},
+                    },
+                    {
+                      label: 'Report',
+                      icon: <Flag size={16} />,
+                      onClick: () => {},
+                    },
+                  ]}
+                  align="right"
+                />
+              </div>
             </div>
 
             {/* Category & Title */}
@@ -364,28 +482,51 @@ export default function PollDetailPage() {
             </div>
           </div>
 
-          {/* Poll options */}
+          {/* Poll options or results */}
           <div className="px-8 pb-6">
-            <div className="space-y-3">
-              {poll.options?.map((option, idx) => {
-                const percentage = hasVoted
-                  ? Math.round((option.votes / totalVotes) * 100)
-                  : 0
-                const isWinner = hasVoted && option.votes === maxVotes
-                return (
-                  <PollOption
-                    key={option._id || idx}
-                    option={option}
-                    percentage={percentage}
-                    isSelected={selectedOption === option._id}
-                    isWinner={isWinner}
-                    onSelect={handleVote}
-                    disabled={hasVoted}
-                    index={idx}
-                  />
-                )
-              })}
-            </div>
+            {statusMessage ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center text-surface-400 mb-4">
+                  <statusMessage.icon size={28} />
+                </div>
+                <h3 className="text-lg font-semibold text-surface-900 mb-1">
+                  {statusMessage.title}
+                </h3>
+                <p className="text-sm text-surface-500 max-w-md">
+                  {statusMessage.description}
+                </p>
+              </div>
+            ) : canVote ? (
+              <div className="space-y-3">
+                {poll.options?.map((option, idx) => {
+                  const percentage = hasVoted
+                    ? Math.round((option.votes / totalVotes) * 100)
+                    : 0
+                  const isWinner = hasVoted && option.votes === maxVotes
+                  const isSelected = selectedOptions.includes(option._id)
+                  
+                  return (
+                    <PollOption
+                      key={option._id || idx}
+                      option={option}
+                      percentage={hasVoted ? percentage : 0}
+                      isSelected={isSelected}
+                      isWinner={isWinner}
+                      onSelect={handleVote}
+                      disabled={hasVoted && !poll.allowVoteChange}
+                      index={idx}
+                      pollType={poll.type}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
+              <VoteResults
+                options={resultOptions}
+                totalVotes={totalVotes}
+                pollType={poll.type}
+              />
+            )}
           </div>
 
           {/* Footer */}
@@ -410,7 +551,7 @@ export default function PollDetailPage() {
                 >
                   <MessageCircle size={16} />
                   <span className="font-medium">
-                    {poll.commentsCount || commentsList.length || 0}
+                    {poll.commentsCount || 0}
                   </span>
                 </button>
                 <span className="flex items-center gap-1.5 text-sm text-surface-500">
@@ -431,6 +572,73 @@ export default function PollDetailPage() {
                 <Button variant="ghost" size="sm" icon={<Share2 size={16} />} />
               </div>
             </div>
+            
+            {canVote && (
+              <div className="mt-4 pt-4 border-t border-surface-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {isVoting && (
+                      <div className="flex items-center gap-2 text-sm text-surface-500">
+                        <Loader2 size={16} className="animate-spin" />
+                        Submitting vote...
+                      </div>
+                    )}
+                    {hasVoted && poll.allowVoteChange && !isVoting && (
+                      <p className="text-sm text-surface-500">
+                        You can change your vote as long as this poll is active.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hasVoted && poll.allowVoteChange ? (
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          disabled={isVoting || selectedOptions.length === 0}
+                          loading={isVoting}
+                          onClick={() => {
+                            if (isMultiple && selectedOptions.length > 0) {
+                              changeVote(selectedOptions);
+                            } else if (!isMultiple && selectedOptions.length === 1) {
+                              changeVote(selectedOptions);
+                            }
+                          }}
+                          icon={<Vote size={16} />}
+                        >
+                          {isMultiple ? `Change Vote (${selectedOptions.length})` : 'Change Vote'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isVoting}
+                          onClick={handleRemoveVote}
+                          icon={<Ban size={16} />}
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    ) : !hasVoted && !isVoting ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={selectedOptions.length === 0}
+                        onClick={() => {
+                          if (isMultiple && selectedOptions.length > 0) {
+                            castVote(selectedOptions);
+                          } else if (!isMultiple && selectedOptions.length === 1) {
+                            castVote(selectedOptions);
+                          }
+                        }}
+                        icon={<Vote size={16} />}
+                      >
+                        {isMultiple ? `Vote (${selectedOptions.length})` : 'Vote'}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </motion.div>
@@ -463,8 +671,8 @@ export default function PollDetailPage() {
               </Button>
             </form>
             <div className="space-y-1">
-              {commentsList.length > 0 ? (
-                commentsList.map((comment) => (
+              {comments?.comments?.length > 0 ? (
+                comments.comments.map((comment) => (
                   <CommentItem key={comment._id} comment={comment} />
                 ))
               ) : (
