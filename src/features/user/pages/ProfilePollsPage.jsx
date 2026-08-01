@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Vote, Clock, Eye, MoreHorizontal } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
+import { useAuth } from "../../../contexts/AuthContext";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { Badge } from "../../../components/ui/Badge";
@@ -90,15 +91,25 @@ function PollCard({ poll, index = 0 }) {
 }
 
 export default function ProfilePollsPage() {
+  const { user } = useAuth();
   const { data, isLoading, error } = useQuery({
     queryKey: ["profile", "polls"],
     queryFn: async () => {
-      const response = await apiClient.get("/users/me/polls");
-      return response.data?.data || response.data;
+      const response = await apiClient.get("/polls", { params: { limit: 100 } });
+      const body = response.data;
+      const allPolls = body?.data?.polls || body?.polls || [];
+      const userId = user?.id;
+      const mine = Array.isArray(allPolls)
+        ? allPolls.filter((poll) => {
+            const created = poll.createdBy;
+            return created && (created._id === userId || created === userId);
+          })
+        : [];
+      return mine;
     },
   });
 
-  const polls = data?.polls || data || [];
+  const polls = data || [];
 
   if (isLoading) {
     return (

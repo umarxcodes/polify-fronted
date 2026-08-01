@@ -323,7 +323,7 @@ export default function PollDetailPage() {
                 </button>
                 <span className="flex items-center gap-1.5 text-sm text-surface-500">
                   <Clock size={16} />
-                  <span className="font-medium">{poll.endsAt ? `Ends ${new Date(poll.endsAt).toLocaleDateString()}` : "No end date"}</span>
+                  <span className="font-medium">{poll.expiresAt ? `Ends ${new Date(poll.expiresAt).toLocaleDateString()}` : "No end date"}</span>
                 </span>
               </div>
               <div className="flex items-center gap-2">

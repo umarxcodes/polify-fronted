@@ -1,10 +1,10 @@
 const variants = {
-  primary: 'bg-brand-50 text-brand-700 border-brand-200',
-  secondary: 'bg-surface-100 text-surface-600 border-surface-200',
-  success: 'bg-success-50 text-success-700 border-success-200',
-  danger: 'bg-danger-50 text-danger-700 border-danger-200',
-  warning: 'bg-warning-50 text-warning-700 border-warning-200',
-  info: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  primary: 'bg-brand-500/15 text-brand-400 border-brand-500/20',
+  secondary: 'bg-surface-800 text-surface-300 border-surface-700',
+  success: 'bg-success-500/15 text-success-400 border-success-500/20',
+  danger: 'bg-danger-500/15 text-danger-400 border-danger-500/20',
+  warning: 'bg-warning-500/15 text-warning-400 border-warning-500/20',
+  info: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
 };
 
 const sizes = {

@@ -25,7 +25,7 @@ export default function EditPollPage() {
       options: poll?.options || [{ text: "" }, { text: "" }],
       isAnonymous: poll?.isAnonymous || false,
       allowMultipleVotes: poll?.allowMultipleVotes || false,
-      endsAt: poll?.endsAt || "",
+      expiresAt: poll?.expiresAt || "",
     },
   });
 
@@ -62,7 +62,7 @@ export default function EditPollPage() {
         </div>
         <div>
           <label>Ends At</label>
-          <input type="datetime-local" {...register("endsAt")} />
+          <input type="datetime-local" {...register("expiresAt")} />
         </div>
         <div>
           <label>

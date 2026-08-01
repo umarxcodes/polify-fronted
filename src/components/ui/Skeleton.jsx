@@ -1,6 +1,6 @@
 
 
-export const Skeleton = ({ className = '', variant = 'rectangular', ...props }) => {
+export const Skeleton = ({ className = '', variant = 'rectangular', dark, ...props }) => {
   const variants = {
     rectangular: 'rounded-xl',
     circular: 'rounded-full',
@@ -11,7 +11,7 @@ export const Skeleton = ({ className = '', variant = 'rectangular', ...props }) 
     <div
       className={`
         ${variants[variant]}
-        bg-gradient-to-r from-surface-200 via-surface-100 to-surface-200
+        ${dark ? 'bg-gradient-to-r from-surface-800 via-surface-700 to-surface-800' : 'bg-gradient-to-r from-surface-200 via-surface-100 to-surface-200'}
         bg-[length:200%_100%]
         animate-[skeleton-loading_1.5s_ease-in-out_infinite]
         ${className}

@@ -35,15 +35,15 @@ function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card hover className="p-6">
+      <Card hover dark className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 flex items-center justify-center text-brand-600">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400">
               <Icon size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-sm font-medium text-surface-500">{label}</p>
-              <p className="text-2xl font-bold text-surface-900 mt-0.5">
+              <p className="text-sm font-medium text-surface-400">{label}</p>
+              <p className="text-2xl font-bold text-white mt-0.5">
                 {value}
               </p>
             </div>
@@ -52,8 +52,8 @@ function StatCard({ icon: Icon, label, value, change, delay = 0 }) {
             <div
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
                 isPositive
-                  ? 'bg-success-50 text-success-700'
-                  : 'bg-danger-50 text-danger-700'
+                  ? 'bg-success-500/15 text-success-400'
+                  : 'bg-danger-500/15 text-danger-400'
               }`}
             >
               {isPositive ? (
@@ -77,13 +77,13 @@ function ChartCard({ title, children, className = '' }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card className={`p-6 ${className}`}>
+      <Card dark className={`p-6 ${className}`}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-base font-semibold text-surface-900">
+            <h3 className="text-base font-semibold text-white">
               {title}
             </h3>
-            <p className="text-sm text-surface-500 mt-0.5">Live data</p>
+            <p className="text-sm text-surface-400 mt-0.5">Live data</p>
           </div>
           <Badge variant="primary" dot>
             Live
@@ -101,20 +101,20 @@ function ActivityItem({ poll, delay = 0 }) {
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.3 }}
-      className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-50 transition-colors"
+      className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-800/50 transition-colors"
     >
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500/10 to-brand-600/10 flex items-center justify-center text-brand-600 flex-shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 flex-shrink-0">
         <Vote size={14} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-surface-900 truncate">
+        <p className="text-sm font-medium text-surface-200 truncate">
           {poll.title}
         </p>
         <p className="text-xs text-surface-500 mt-0.5">
           {poll.votes} votes · {poll.timeAgo}
         </p>
       </div>
-      <Badge variant="secondary" size="sm">
+      <Badge variant="secondary" size="sm" dark>
         {poll.category}
       </Badge>
     </motion.div>
@@ -154,13 +154,13 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-16 h-16 rounded-2xl bg-danger-50 flex items-center justify-center text-danger-500 mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-danger-500/15 flex items-center justify-center text-danger-400 mb-4">
           <Activity size={28} />
         </div>
-        <h3 className="text-lg font-semibold text-surface-900 mb-1">
+        <h3 className="text-lg font-semibold text-white mb-1">
           Failed to load dashboard
         </h3>
-        <p className="text-sm text-surface-500 mb-4">{error.message}</p>
+        <p className="text-sm text-surface-400 mb-4">{error.message}</p>
         <Button onClick={() => refetch()}>Try again</Button>
       </div>
     )
@@ -192,24 +192,36 @@ export default function DashboardPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-violet-600 p-6 md:p-8 text-white"
       >
-        <div>
-          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-surface-500 mt-1">
-            Welcome back! Here's what's happening in your community.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {quickActions.map((action) => (
-            <Link key={action.label} to={action.href}>
-              <Button variant={action.variant} icon={action.icon} size="sm">
-                {action.label}
-              </Button>
-            </Link>
-          ))}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              Dashboard
+            </h1>
+            <p className="text-white/80 mt-1">
+              Welcome back! Here's what's happening in your community.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {quickActions.map((action) => (
+              <Link key={action.label} to={action.href}>
+                <Button
+                  variant={action.variant === "primary" ? "default" : "outline"}
+                  icon={action.icon}
+                  size="sm"
+                  className={
+                    action.variant === "primary"
+                      ? "bg-white text-brand-700 hover:bg-white/90 shadow-lg"
+                      : "border-white/30 text-white hover:bg-white/10"
+                  }
+                >
+                  {action.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
       </motion.div>
 
@@ -217,13 +229,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading ? (
           [...Array(4)].map((_, i) => (
-            <Card key={i} className="p-6">
+            <Card key={i} dark className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <Skeleton dark className="w-12 h-12 rounded-xl" />
                   <div className="space-y-2">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-6 w-16" />
+                    <Skeleton dark className="h-3 w-20" />
+                    <Skeleton dark className="h-6 w-16" />
                   </div>
                 </div>
               </div>
@@ -284,17 +296,17 @@ export default function DashboardPage() {
               <div className="p-4 space-y-2">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 p-3">
-                    <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
+                    <Skeleton dark className="w-8 h-8 rounded-lg flex-shrink-0" />
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="h-3 w-32" />
+                      <Skeleton dark className="h-4 w-48" />
+                      <Skeleton dark className="h-3 w-32" />
                     </div>
-                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton dark className="h-6 w-16 rounded-full" />
                   </div>
                 ))}
               </div>
             ) : recentPolls.length > 0 ? (
-              <div className="divide-y divide-surface-100">
+              <div className="divide-y divide-surface-800">
                 {recentPolls.slice(0, 5).map((poll, index) => (
                   <ActivityItem
                     key={poll._id || index}
@@ -310,10 +322,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="p-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-surface-100 flex items-center justify-center text-surface-400 mx-auto mb-3">
+                <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
                   <FileText size={24} />
                 </div>
-                <p className="text-sm text-surface-500">
+                <p className="text-sm text-surface-400">
                   No polls yet. Create your first poll to get started!
                 </p>
                 <Link to="/polls/create">
@@ -339,8 +351,8 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-12" />
+                    <Skeleton dark className="h-4 w-32" />
+                    <Skeleton dark className="h-4 w-12" />
                   </div>
                 ))}
               </div>
@@ -352,14 +364,14 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + index * 0.05 }}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
+                      <div className="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center text-brand-400">
                         <Flame size={14} />
                       </div>
                       <div className="min-w-0">
-                        <span className="block text-sm font-medium text-surface-900 truncate">
+                        <span className="block text-sm font-medium text-surface-200 truncate">
                           {poll.title || 'Untitled poll'}
                         </span>
                         <span className="text-xs text-surface-500">
@@ -370,10 +382,10 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-surface-900">
+                      <span className="text-sm font-semibold text-white">
                         {formatNumber(poll.totalVotes || 0)}
                       </span>
-                      <span className="text-xs font-medium text-success-600">
+                      <span className="text-xs font-medium text-success-400">
                         {poll.trendingScore
                           ? `${Math.round(poll.trendingScore)} pts`
                           : 'Trending'}
@@ -383,7 +395,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-surface-200 p-4 text-sm text-surface-500">
+              <div className="rounded-xl border border-dashed border-surface-700 p-4 text-sm text-surface-400">
                 No trending polls available right now.
               </div>
             )}
@@ -405,12 +417,12 @@ export default function DashboardPage() {
                     transition={{ delay: 0.4 + index * 0.05 }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="p-4 rounded-xl border border-surface-200 hover:border-brand-300 hover:bg-brand-50/50 transition-all text-center"
+                    className="p-4 rounded-xl border border-surface-700 hover:border-brand-500/40 hover:bg-brand-500/10 transition-all text-center"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 flex items-center justify-center text-brand-600 mx-auto mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 mx-auto mb-2">
                       <action.icon size={18} />
                     </div>
-                    <span className="text-xs font-medium text-surface-700">
+                    <span className="text-xs font-medium text-surface-300">
                       {action.label}
                     </span>
                   </motion.div>
