@@ -2,20 +2,37 @@ import { apiClient } from "../../../lib/axios";
 
 export const getDashboardStats = async () => {
   const { data } = await apiClient.get("/analytics/dashboard");
-  return data;
+  return data?.data || data;
 };
 
-export const getRecentActivity = async () => {
+export const getLatestPolls = async () => {
   const { data } = await apiClient.get("/search/latest");
-  return data;
+  return data?.data || data;
 };
 
 export const getTrendingPolls = async () => {
   const { data } = await apiClient.get("/search/trending");
-  return data;
+  return data?.data || data;
 };
 
-export const getPollAnalytics = async (pollId) => {
-  const { data } = await apiClient.get(`/analytics/polls/${pollId}`);
-  return data;
+export const getRecommendedPolls = async () => {
+  const { data } = await apiClient.get("/search/recommended");
+  return data?.data || data;
+};
+
+export const getNotifications = async (limit = 5) => {
+  const { data } = await apiClient.get("/notifications/", {
+    params: { limit, sort: "newest" },
+  });
+  return data?.data || data;
+};
+
+export const getUnreadCount = async () => {
+  const { data } = await apiClient.get("/notifications/unread-count");
+  return data?.data?.count || data?.count || 0;
+};
+
+export const getCurrentUser = async () => {
+  const { data } = await apiClient.get("/users/me");
+  return data?.data?.user || data?.user || data?.data || data;
 };

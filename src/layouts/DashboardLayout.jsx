@@ -11,11 +11,22 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  LogOut,
+  User,
+  Moon,
+  Sun,
+  Menu,
+  X,
+  ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../lib/axios'
 import { resolveIcon } from '../components/ui/iconUtils'
+import { Dropdown } from '../components/ui/Dropdown'
+import { Avatar } from '../components/ui/Avatar'
+import { useTheme } from '../contexts/ThemeContext'
+import { toast } from 'sonner'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
@@ -23,7 +34,7 @@ const navItems = [
   { icon: Plus, label: 'Create poll', href: '/polls/create' },
   { icon: BarChart3, label: 'Analytics', href: '/analytics' },
   { icon: Bookmark, label: 'Bookmarks', href: '/bookmarks' },
-  { icon: Bell, label: 'Notifications', href: '/notifications', badge: 3 },
+  { icon: Bell, label: 'Notifications', href: '/notifications' },
 ]
 
 const bottomNavItems = [
@@ -31,9 +42,122 @@ const bottomNavItems = [
   { icon: HelpCircle, label: 'Help', href: '/dashboard' },
 ]
 
+function SidebarContent({ collapsed, onNavigate, user }) {
+  return (
+    <>
+      {/* Logo */}
+      <div className="flex items-center h-16 px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+          </div>
+          {!collapsed && (
+            <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap">
+              Pollify
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-brand-500/15 text-brand-400 shadow-sm shadow-brand-500/10'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`relative flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`}>
+                  {resolveIcon(item.icon, 20, {
+                    strokeWidth: isActive ? 2.5 : 2,
+                  })}
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-1.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && (
+                  <span className="whitespace-nowrap">{item.label}</span>
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Bottom section */}
+      <div className="p-3 space-y-1 border-t border-surface-800">
+        {bottomNavItems.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-brand-500/15 text-brand-400'
+                  : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`}>
+                  {resolveIcon(item.icon, 20, { strokeWidth: isActive ? 2.5 : 2 })}
+                </div>
+                {!collapsed && (
+                  <span className="whitespace-nowrap">{item.label}</span>
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        {/* User profile */}
+        <div className="mt-2 pt-2 border-t border-surface-800">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <Avatar
+              src={user?.profileImage}
+              fallback={(user?.name || 'U').split(' ').map(n => n[0]).join('')}
+              size="sm"
+              color="brand"
+            />
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {user?.name || 'User'}
+                </p>
+                <p className="text-xs text-surface-400 truncate">
+                  @{user?.username || 'user'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const { user } = useAuth()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const { user, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -41,134 +165,70 @@ export default function DashboardLayout() {
     queryKey: ['notifications', 'unread'],
     queryFn: async () => {
       const { data } = await apiClient.get('/notifications/unread-count')
-      return data?.data || data || 0
+      return data?.data?.count || data?.count || 0
     },
+    refetchInterval: 60 * 1000,
   })
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      toast.success('Logged out successfully')
+      navigate('/login', { replace: true })
+    } catch {
+      toast.error('Logout failed')
+    }
+  }
+
+  const profileMenuItems = [
+    { label: 'Profile', icon: User, onClick: () => navigate('/profile') },
+    { label: 'Settings', icon: Settings, onClick: () => navigate('/profile/settings') },
+    { label: 'Toggle theme', icon: theme === 'dark' ? Sun : Moon, onClick: toggleTheme },
+    { label: 'Logout', icon: LogOut, onClick: handleLogout, danger: true },
+  ]
 
   return (
     <div className="flex min-h-screen bg-surface-950 text-surface-100">
-      {/* Sidebar */}
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar drawer */}
       <aside
         className={`
           fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-900 border-r border-surface-800
+          transform transition-transform duration-300 ease-out lg:hidden
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          w-[260px]
+        `}
+      >
+        <div className="flex items-center justify-between px-4 h-16">
+          <span className="text-lg font-bold text-white">Pollify</span>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <SidebarContent collapsed={false} onNavigate={() => setMobileOpen(false)} user={user} />
+        </div>
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={`
+          hidden lg:flex flex-col bg-surface-900 border-r border-surface-800
           transition-all duration-300 ease-out
           ${collapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
       >
-        {/* Logo */}
-        <div className="flex items-center h-16 px-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 20V10" />
-                <path d="M18 20V4" />
-                <path d="M6 20v-4" />
-              </svg>
-            </div>
-            {!collapsed && (
-              <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap">
-                Pollify
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-brand-500/15 text-brand-400 shadow-sm shadow-brand-500/10'
-                    : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <div
-                    className={`relative flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`}
-                  >
-                    {resolveIcon(item.icon, 20, {
-                      strokeWidth: isActive ? 2.5 : 2,
-                    })}
-                    {item.badge && (
-                      <span className="absolute -top-1 -right-1.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  {!collapsed && (
-                    <span className="whitespace-nowrap">{item.label}</span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Bottom section */}
-        <div className="p-3 space-y-1 border-t border-surface-800">
-          {bottomNavItems.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-brand-500/15 text-brand-400'
-                    : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {resolveIcon(item.icon, 20, {
-                    strokeWidth: isActive ? 2.5 : 2,
-                    className: `flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`,
-                  })}
-                  {!collapsed && (
-                    <span className="whitespace-nowrap">{item.label}</span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
-
-          {/* User profile */}
-          <div className="mt-2 pt-2 border-t border-surface-800">
-            <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                {(user?.name || 'U')
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')}
-              </div>
-              {!collapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {user?.name || 'User'}
-                  </p>
-                  <p className="text-xs text-surface-400 truncate">
-                    @{user?.username || 'user'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <SidebarContent collapsed={collapsed} onNavigate={() => {}} user={user} />
 
         {/* Collapse toggle */}
         <button
@@ -183,18 +243,24 @@ export default function DashboardLayout() {
       {/* Main content */}
       <div
         className="flex-1 min-h-screen transition-all duration-300 ease-out"
-        style={{ marginLeft: collapsed ? 72 : 260 }}
+        style={{ marginLeft: 0 }}
       >
         {/* Topbar */}
         <header className="sticky top-0 z-40 h-16 bg-surface-900/80 backdrop-blur-xl border-b border-surface-800">
-          <div className="flex items-center justify-between h-full px-6">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between h-full px-4 lg:px-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="lg:hidden p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800"
+              >
+                <Menu size={20} />
+              </button>
               <h1 className="text-lg font-semibold text-white">
                 {location.pathname === '/dashboard' ? 'Dashboard' : ''}
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3">
               {/* Search */}
               <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-surface-800 rounded-xl border border-surface-700 w-64">
                 <Search size={16} className="text-surface-500" />
@@ -228,21 +294,38 @@ export default function DashboardLayout() {
                 )}
               </button>
 
-              {/* User menu */}
-              <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-800 transition-colors">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-bold">
-                  {(user?.name || 'U')
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </div>
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
               </button>
+
+              {/* User dropdown */}
+              <Dropdown
+                align="right"
+                width={220}
+                trigger={
+                  <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-800 transition-colors">
+                    <Avatar
+                      src={user?.profileImage}
+                      fallback={(user?.name || 'U').split(' ').map(n => n[0]).join('')}
+                      size="sm"
+                      color="brand"
+                    />
+                    <ChevronDown size={14} className="text-surface-400 hidden sm:block" />
+                  </button>
+                }
+                items={profileMenuItems}
+              />
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
