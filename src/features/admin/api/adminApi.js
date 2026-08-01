@@ -105,6 +105,11 @@ export const getAuditLogs = async (params = {}) => {
   return data;
 };
 
+export const exportAuditLogs = async (params = {}) => {
+  const { data } = await apiClient.get("/admin/audit-logs/export", { params });
+  return data;
+};
+
 export const getAnalytics = async () => {
   const { data } = await apiClient.get("/admin/analytics");
   return data;

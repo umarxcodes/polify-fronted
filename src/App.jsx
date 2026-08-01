@@ -22,7 +22,14 @@ const CreatePollPage = lazy(() => import("./features/polls/pages/CreatePollPage"
 const EditPollPage = lazy(() => import("./features/polls/pages/EditPollPage"));
 const PollDetailPage = lazy(() => import("./features/polls/pages/PollDetailPage"));
 const SearchPage = lazy(() => import("./features/search/pages/SearchPage"));
-const AdminPage = lazy(() => import("./features/admin/pages/AdminPage"));
+const AdminDashboardPage = lazy(() => import("./features/admin/pages/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("./features/admin/pages/AdminUsersPage"));
+const AdminPollsPage = lazy(() => import("./features/admin/pages/AdminPollsPage"));
+const AdminCommentsPage = lazy(() => import("./features/admin/pages/AdminCommentsPage"));
+const AdminCategoriesPage = lazy(() => import("./features/admin/pages/AdminCategoriesPage"));
+const AdminAuditLogsPage = lazy(() => import("./features/admin/pages/AdminAuditLogsPage"));
+const AdminAnalyticsPage = lazy(() => import("./features/admin/pages/AdminAnalyticsPage"));
+const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSettingsPage"));
 const ProfileActivityPage = lazy(() => import("./features/user/pages/ProfileActivityPage"));
 const ProfilePollsPage = lazy(() => import("./features/user/pages/ProfilePollsPage"));
 const SettingsPage = lazy(() => import("./features/user/pages/SettingsPage"));
@@ -215,22 +222,42 @@ function AppRoutes() {
       }>
         <Route index element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminDashboardPage />
           </Suspense>
         } />
         <Route path="users" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminUsersPage />
           </Suspense>
         } />
         <Route path="polls" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminPollsPage />
           </Suspense>
         } />
-        <Route path="reports" element={
+        <Route path="comments" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminCommentsPage />
+          </Suspense>
+        } />
+        <Route path="categories" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCategoriesPage />
+          </Suspense>
+        } />
+        <Route path="audit-logs" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminAuditLogsPage />
+          </Suspense>
+        } />
+        <Route path="analytics" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminAnalyticsPage />
+          </Suspense>
+        } />
+        <Route path="settings" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminSettingsPage />
           </Suspense>
         } />
       </Route>

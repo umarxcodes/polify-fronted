@@ -4,30 +4,43 @@ import {
   LayoutDashboard,
   Users,
   FileText,
-  Flag,
-  Shield,
+  MessageSquare,
+  FolderOpen,
+  ScrollText,
   BarChart3,
   Settings,
-  Bell,
+  Shield,
   ChevronLeft,
   ChevronRight,
+  Bell,
+  Sun,
+  Moon,
+  LogOut,
+  User,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../lib/axios'
 import { resolveIcon } from '../components/ui/iconUtils'
+import { Avatar } from '../components/ui/Avatar'
+import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
+import { Dropdown } from '../components/ui/Dropdown'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
   { icon: Users, label: 'Users', href: '/admin/users' },
   { icon: FileText, label: 'Polls', href: '/admin/polls' },
-  { icon: Flag, label: 'Reports', href: '/admin/reports' },
-  { icon: Shield, label: 'Moderation', href: '/admin/moderation' },
+  { icon: MessageSquare, label: 'Comments', href: '/admin/comments' },
+  { icon: FolderOpen, label: 'Categories', href: '/admin/categories' },
+  { icon: ScrollText, label: 'Audit Logs', href: '/admin/audit-logs' },
   { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ]
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const { user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const location = useLocation()
 
   const { data: stats } = useQuery({
@@ -47,26 +60,36 @@ export default function AdminLayout() {
     {
       icon: FileText,
       label: 'Active Polls',
-      value: stats?.totalPolls?.toLocaleString() || '0',
+      value: stats?.activePolls?.toLocaleString() || '0',
     },
     {
-      icon: Flag,
-      label: 'Reports',
+      icon: Shield,
+      label: 'Pending Reports',
       value: stats?.pendingReports?.toLocaleString() || '0',
     },
     {
       icon: BarChart3,
-      label: 'Engagement',
-      value: `${stats?.engagementRate || 0}%`,
+      label: 'Total Votes',
+      value: stats?.totalVotes?.toLocaleString() || '0',
     },
   ]
 
+  const profileMenuItems = [
+    { label: 'Profile', icon: User, onClick: () => window.location.href = '/profile' },
+    { label: 'Dashboard', icon: LayoutDashboard, onClick: () => window.location.href = '/dashboard' },
+    { label: 'Toggle theme', icon: theme === 'dark' ? Sun : Moon, onClick: toggleTheme },
+    { label: 'Logout', icon: LogOut, onClick: async () => {
+      await apiClient.post('/auth/logout').catch(() => {})
+      window.location.href = '/login'
+    }, danger: true },
+  ]
+
   return (
-    <div className="flex min-h-screen bg-surface-950">
+    <div className="flex min-h-screen bg-surface-950 text-surface-100">
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-900 border-r border-surface-800
+          hidden lg:flex flex-col bg-surface-900 border-r border-surface-800
           transition-all duration-300 ease-out
           ${collapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
@@ -74,7 +97,7 @@ export default function AdminLayout() {
         {/* Logo */}
         <div className="flex items-center h-16 px-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-danger-400 to-danger-600 flex items-center justify-center shadow-lg shadow-danger-500/25">
               <Shield size={16} className="text-white" />
             </div>
             {!collapsed && (
@@ -94,17 +117,16 @@ export default function AdminLayout() {
               className={({ isActive }) =>
                 `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-brand-500/10 text-brand-400 shadow-sm shadow-brand-500/10'
+                    ? 'bg-brand-500/15 text-brand-400 shadow-sm shadow-brand-500/10'
                     : 'text-surface-400 hover:text-surface-200 hover:bg-surface-800'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {resolveIcon(item.icon, 20, {
-                    strokeWidth: isActive ? 2.5 : 2,
-                    className: `flex-shrink-0 ${isActive ? 'text-brand-400' : ''}`,
-                  })}
+                  <div className={`flex-shrink-0 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`}>
+                    {resolveIcon(item.icon, 20, { strokeWidth: isActive ? 2.5 : 2 })}
+                  </div>
                   {!collapsed && (
                     <span className="whitespace-nowrap">{item.label}</span>
                   )}
@@ -140,6 +162,28 @@ export default function AdminLayout() {
           </div>
         )}
 
+        {/* User profile */}
+        <div className="p-3 border-t border-surface-800">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <Avatar
+              src={user?.profileImage}
+              fallback={(user?.name || 'A').split(' ').map(n => n[0]).join('')}
+              size="sm"
+              color="brand"
+            />
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {user?.name || 'Admin'}
+                </p>
+                <p className="text-xs text-surface-400 truncate">
+                  @{user?.username || 'admin'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -153,28 +197,45 @@ export default function AdminLayout() {
       {/* Main content */}
       <div
         className="flex-1 min-h-screen transition-all duration-300 ease-out"
-        style={{ marginLeft: collapsed ? 72 : 260 }}
+        style={{ marginLeft: 0 }}
       >
         {/* Topbar */}
         <header className="sticky top-0 z-40 h-16 bg-surface-900/80 backdrop-blur-xl border-b border-surface-800">
-          <div className="flex items-center justify-between h-full px-6">
+          <div className="flex items-center justify-between h-full px-4 lg:px-6">
             <div>
               <h1 className="text-lg font-semibold text-white">
                 {location.pathname === '/admin' ? 'Admin Dashboard' : ''}
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3">
               <button className="relative p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
                 <Bell size={20} />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-400 rounded-full" />
               </button>
+
+              {/* User dropdown */}
+              <Dropdown
+                align="right"
+                width={200}
+                trigger={
+                  <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-800 transition-colors">
+                    <Avatar
+                      src={user?.profileImage}
+                      fallback={(user?.name || 'A').split(' ').map(n => n[0]).join('')}
+                      size="sm"
+                      color="brand"
+                    />
+                  </button>
+                }
+                items={profileMenuItems}
+              />
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
