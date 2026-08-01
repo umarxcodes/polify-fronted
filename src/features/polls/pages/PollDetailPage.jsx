@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -13,7 +13,6 @@ import {
   MoreHorizontal,
   Flag,
   MessageCircle,
-  Send,
   Lock,
   Archive,
   PlayCircle,
@@ -27,10 +26,11 @@ import { Badge } from '../../../components/ui/Badge'
 import { Avatar } from '../../../components/ui/Avatar'
 import { Skeleton } from '../../../components/ui/Skeleton'
 import { Dropdown } from '../../../components/ui/Dropdown'
-import { Input } from '../../../components/ui/Input'
-import { toast } from 'sonner'
 import { useVoting } from '../../voting/hooks/useVoting'
 import VoteResults from '../../voting/components/VoteResults'
+import { useComments } from '../../comments/hooks/useComments'
+import CommentCard from '../../comments/components/CommentCard'
+import CommentInput from '../../comments/components/CommentInput'
 
 function PollOption({
   option,
@@ -137,36 +137,6 @@ function PollOption({
   )
 }
 
-function CommentItem({ comment, onReply }) {
-  return (
-    <div className="flex gap-3 p-4 rounded-xl hover:bg-surface-50 transition-colors">
-      <Avatar fallback={comment.user?.name?.[0] || 'U'} size="sm" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-surface-900">
-            {comment.user?.name || 'Anonymous'}
-          </span>
-          <span className="text-xs text-surface-400">
-            {comment.timeAgo || 'Recently'}
-          </span>
-        </div>
-        <p className="text-sm text-surface-600 mt-1">{comment.text}</p>
-        <div className="flex items-center gap-3 mt-2">
-          <button className="text-xs text-surface-500 hover:text-brand-600 transition-colors">
-            Like
-          </button>
-          <button
-            className="text-xs text-surface-500 hover:text-brand-600 transition-colors"
-            onClick={() => onReply?.(comment._id)}
-          >
-            Reply
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function PollStatusBadge({ status, expiresAt, startsAt }) {
   const now = new Date();
   const isExpired = expiresAt && new Date(expiresAt) < now;
@@ -214,10 +184,8 @@ function PollStatusBadge({ status, expiresAt, startsAt }) {
 
 export default function PollDetailPage() {
   const { id } = useParams()
-  const queryClient = useQueryClient()
   const [selectedOptions, setSelectedOptions] = useState([])
   const [showComments, setShowComments] = useState(false)
-  const [newComment, setNewComment] = useState('')
 
   const {
     data: poll,
@@ -233,17 +201,6 @@ export default function PollDetailPage() {
   })
 
   const {
-    data: comments,
-  } = useQuery({
-    queryKey: ['comments', id],
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/comments/polls/${id}/comments`)
-      return data?.data || data || []
-    },
-    enabled: !!id && showComments,
-  })
-
-  const {
     myVote,
     results,
     castVote,
@@ -252,16 +209,23 @@ export default function PollDetailPage() {
     isVoting,
   } = useVoting(id)
 
-  const commentMutation = useMutation({
-    mutationFn: (text) =>
-      apiClient.post(`/comments/polls/${id}/comments`, { content: text }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', id] })
-      setNewComment('')
-      toast.success('Comment added')
-    },
-    onError: () => toast.error('Failed to add comment'),
-  })
+  const {
+    comments,
+    isLoading: commentsLoading,
+    addComment,
+    editComment,
+    deleteComment,
+    replyTo,
+    like,
+    unlike,
+    pin,
+    unpin,
+    report,
+    isAdding,
+    isLiking,
+    isPinning,
+    isReporting,
+  } = useComments(id)
 
   const handleVote = (optionId) => {
     if (isVoting) return;
@@ -306,12 +270,6 @@ export default function PollDetailPage() {
     removeVote();
     setSelectedOptions([]);
   };
-
-  const handleComment = (e) => {
-    e.preventDefault()
-    if (!newComment.trim()) return
-    commentMutation.mutate(newComment)
-  }
 
   if (isLoading) {
     return (
@@ -654,31 +612,56 @@ export default function PollDetailPage() {
             <h3 className="text-lg font-semibold text-surface-900 mb-4">
               Comments
             </h3>
-            <form onSubmit={handleComment} className="flex gap-3 mb-6">
-              <Input
-                placeholder="Write a comment..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                icon={<Send size={16} />}
-                disabled={!newComment.trim()}
-              >
-                Post
-              </Button>
-            </form>
-            <div className="space-y-1">
-              {comments?.comments?.length > 0 ? (
-                comments.comments.map((comment) => (
-                  <CommentItem key={comment._id} comment={comment} />
+            <CommentInput
+              onSubmit={addComment}
+              placeholder="Write a comment..."
+              disabled={isAdding}
+            />
+            <div className="mt-6 space-y-1">
+              {commentsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-4">
+                      <Skeleton className="w-10 h-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : comments.length > 0 ? (
+                comments.map((comment, index) => (
+                  <CommentCard
+                    key={comment._id || index}
+                    comment={comment}
+                    currentUserId={null}
+                    pollOwnerId={poll?.createdBy?._id}
+                    onReply={replyTo}
+                    onEdit={editComment}
+                    onDelete={deleteComment}
+                    onLike={like}
+                    onUnlike={unlike}
+                    onPin={pin}
+                    onUnpin={unpin}
+                    onReport={report}
+                    isLiking={isLiking}
+                    isReplying={false}
+                    isPinning={isPinning}
+                    isReporting={isReporting}
+                    index={index}
+                  />
                 ))
               ) : (
-                <p className="text-sm text-surface-500 text-center py-4">
-                  No comments yet. Be the first to comment!
-                </p>
+                <div className="text-center py-8">
+                  <MessageCircle
+                    className="mx-auto text-surface-400 mb-3"
+                    size={32}
+                  />
+                  <p className="text-sm text-surface-500">
+                    No comments yet. Be the first to comment!
+                  </p>
+                </div>
               )}
             </div>
           </Card>
