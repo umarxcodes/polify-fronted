@@ -37,8 +37,8 @@ export default function NotificationsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-surface-900">Notifications</h1>
-          <p className="mt-1 text-surface-500">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Notifications</h1>
+          <p className="mt-1 text-surface-400">
             Keep up with votes, replies, and activity.
           </p>
         </div>
@@ -56,14 +56,14 @@ export default function NotificationsPage() {
       {query.isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 rounded-2xl" />
+            <Skeleton key={i} dark className="h-20 rounded-2xl" />
           ))}
         </div>
       )}
 
       {query.isError && (
-        <Card className="p-8 text-center text-surface-500">
-          Couldn’t load notifications.
+        <Card dark className="p-8 text-center text-surface-400">
+          Couldn't load notifications.
         </Card>
       )}
 
@@ -74,15 +74,16 @@ export default function NotificationsPage() {
             {items.map((n) => (
               <Card
                 key={n._id}
-                className={`p-4 flex gap-4 ${n.isRead ? '' : 'border-brand-200 bg-brand-50/30'}`}
+                dark
+                className={`p-4 flex gap-4 ${n.isRead ? '' : 'border-brand-500/30 bg-brand-500/5'}`}
               >
-                <Bell className="mt-0.5 shrink-0 text-brand-600" size={19} />
+                <Bell className="mt-0.5 shrink-0 text-brand-400" size={19} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-900">
+                  <p className="text-sm font-medium text-white">
                     {n.title || n.type || 'New activity'}
                   </p>
-                  <p className="mt-1 text-sm text-surface-600">{n.message}</p>
-                  <p className="mt-1 text-xs text-surface-400">
+                  <p className="mt-1 text-sm text-surface-300">{n.message}</p>
+                  <p className="mt-1 text-xs text-surface-500">
                     {n.createdAt
                       ? new Date(n.createdAt).toLocaleString()
                       : 'Just now'}
@@ -110,9 +111,9 @@ export default function NotificationsPage() {
             ))}
           </div>
         ) : (
-          <Card className="p-12 text-center">
-            <Bell className="mx-auto text-surface-400" size={32} />
-            <p className="mt-4 text-surface-500">You’re all caught up.</p>
+          <Card dark className="p-12 text-center">
+            <Bell className="mx-auto text-surface-500" size={32} />
+            <p className="mt-4 text-surface-400">You're all caught up.</p>
           </Card>
         ))}
     </div>
