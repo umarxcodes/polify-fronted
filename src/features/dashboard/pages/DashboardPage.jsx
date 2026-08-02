@@ -17,7 +17,6 @@ import {
   Share2,
   Bookmark,
   ExternalLink,
-  RefreshCw,
   UserPlus,
   Tag,
   Calendar,
@@ -34,6 +33,8 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
 import { SearchInput } from "../../../components/ui/SearchInput";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
   getDashboardStats,
@@ -67,7 +68,7 @@ function StatCard({ icon: Icon, label, value, change, delay = 0, compact = false
       <Card hover dark className={`p-5 ${compact ? "min-h-[140px]" : ""}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 flex items-center justify-center text-primary-400 flex-shrink-0">
               <Icon size={20} strokeWidth={2} />
             </div>
             <div className="min-w-0">
@@ -116,7 +117,7 @@ function PollCard({ poll, index = 0, showDescription = false }) {
               )}
             </div>
             <Link to={`/polls/${poll._id}`}>
-              <h4 className="text-base font-semibold text-surface-100 hover:text-brand-400 transition-colors line-clamp-2">
+              <h4 className="text-base font-semibold text-surface-100 hover:text-primary-400 transition-colors line-clamp-2">
                 {poll.title || "Untitled poll"}
               </h4>
             </Link>
@@ -126,15 +127,15 @@ function PollCard({ poll, index = 0, showDescription = false }) {
               </p>
             )}
             <div className="flex items-center gap-4 mt-3">
-              <span className="flex items-center gap-1 text-xs text-surface-500">
+              <span className="flex items-center gap-1 text-xs text-surface-400">
                 <Vote size={14} />
                 {formatNumber(poll.totalVotes || 0)} votes
               </span>
-              <span className="flex items-center gap-1 text-xs text-surface-500">
+              <span className="flex items-center gap-1 text-xs text-surface-400">
                 <Eye size={14} />
                 {formatNumber(poll.views || 0)} views
               </span>
-              <span className="flex items-center gap-1 text-xs text-surface-500">
+              <span className="flex items-center gap-1 text-xs text-surface-400">
                 <Clock size={14} />
                 {formatDate(poll.createdAt)}
               </span>
@@ -151,34 +152,6 @@ function PollCard({ poll, index = 0, showDescription = false }) {
         </div>
       </Card>
     </motion.div>
-  );
-}
-
-function EmptyState({ icon: Icon, title, description, action }) {
-  return (
-    <div className="p-12 text-center">
-      <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-        <Icon size={24} />
-      </div>
-      <h3 className="text-lg font-semibold text-surface-200 mb-1">{title}</h3>
-      <p className="text-sm text-surface-400 mb-4">{description}</p>
-      {action}
-    </div>
-  );
-}
-
-function ErrorState({ message, onRetry }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20">
-      <div className="w-16 h-16 rounded-2xl bg-danger-500/15 flex items-center justify-center text-danger-400 mb-4">
-        <Activity size={28} />
-      </div>
-      <h3 className="text-lg font-semibold text-white mb-1">Failed to load</h3>
-      <p className="text-sm text-surface-400 mb-4">{message}</p>
-      <Button onClick={onRetry} variant="secondary" icon={<RefreshCw size={16} />}>
-        Try again
-      </Button>
-    </div>
   );
 }
 
@@ -207,7 +180,7 @@ function ProfileSummaryCard({ profile, stats, statsLoading }) {
             @{profile.username || "user"}
           </p>
           {profile.bio && (
-            <p className="text-xs text-surface-500 mt-1 line-clamp-2">
+            <p className="text-xs text-surface-400 mt-1 line-clamp-2">
               {profile.bio}
             </p>
           )}
@@ -247,10 +220,10 @@ function ProfileSummaryCard({ profile, stats, statsLoading }) {
             initial={{ width: 0 }}
             animate={{ width: `${stats.profileCompletionPercentage ?? 0}%` }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full"
+            className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
           />
         </div>
-        <div className="flex items-center gap-1 text-xs text-surface-500">
+        <div className="flex items-center gap-1 text-xs text-surface-400">
           <Calendar size={12} />
           Member since {memberSince}
         </div>
@@ -300,7 +273,7 @@ function UserStatisticsCard({ stats, statsLoading }) {
               className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-800/50 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
+                <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-400">
                   <item.icon size={14} />
                 </div>
                 <span className="text-sm text-surface-300">{item.label}</span>
@@ -320,7 +293,7 @@ function CategoriesWidget({ categories, loading }) {
   return (
     <Card dark className="p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Tag size={16} className="text-brand-400" />
+        <Tag size={16} className="text-primary-400" />
         <h3 className="text-base font-semibold text-white">Categories</h3>
       </div>
       {loading ? (
@@ -347,7 +320,7 @@ function CategoriesWidget({ categories, loading }) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-surface-500">No categories found</p>
+        <p className="text-sm text-surface-400">No categories found</p>
       )}
     </Card>
   );
@@ -356,7 +329,7 @@ function CategoriesWidget({ categories, loading }) {
 function QuickStatsCard({ stats, statsLoading }) {
   const items = [
     { label: "Total Votes", value: stats.totalVotesCast, icon: Vote, color: "text-success-400" },
-    { label: "Saved Polls", value: stats.totalSavedPolls, icon: Bookmark, color: "text-brand-400" },
+    { label: "Saved Polls", value: stats.totalSavedPolls, icon: Bookmark, color: "text-primary-400" },
     { label: "Comments", value: stats.totalComments, icon: MessageCircle, color: "text-warning-400" },
   ];
 
@@ -432,7 +405,7 @@ function RecentActivityCard({ polls }) {
                 <p className="text-sm text-surface-200 line-clamp-2">
                   {activity.title}
                 </p>
-                <p className="text-xs text-surface-500 mt-0.5">
+                <p className="text-xs text-surface-400 mt-0.5">
                   {formatDate(activity.time)}
                 </p>
               </div>
@@ -444,6 +417,7 @@ function RecentActivityCard({ polls }) {
           icon={Activity}
           title="No activity yet"
           description="Your recent activity will appear here."
+          dark
         />
       )}
     </Card>
@@ -600,6 +574,7 @@ export default function DashboardPage() {
         <ErrorState
           message={statsError?.message || latestError?.message || trendingError?.message}
           onRetry={handleRetryAll}
+          dark
         />
       </div>
     );
@@ -611,7 +586,7 @@ export default function DashboardPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-violet-600 p-6 md:p-8 text-white"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-500 via-primary-600 to-violet-600 p-6 md:p-8 text-white"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -632,7 +607,7 @@ export default function DashboardPage() {
                   size="sm"
                   className={
                     action.variant === "primary"
-                      ? "bg-white text-brand-700 hover:bg-white/90 shadow-lg"
+                      ? "bg-white text-primary-700 hover:bg-white/90 shadow-lg"
                       : "border-white/30 text-white hover:bg-white/10"
                   }
                 >
@@ -766,6 +741,7 @@ export default function DashboardPage() {
                 icon={FileText}
                 title="No polls yet"
                 description="Create your first poll to see it here."
+                dark
                 action={
                   <Link to="/polls/create">
                     <Button variant="primary" size="sm" icon={<Plus size={16} />}>
@@ -809,6 +785,7 @@ export default function DashboardPage() {
                   icon={Search}
                   title="No recommendations yet"
                   description="Vote on more polls to get personalized recommendations."
+                  dark
                 />
               )}
             </Card>
@@ -837,7 +814,7 @@ export default function DashboardPage() {
                 <h3 className="text-base font-semibold text-white">Trending</h3>
                 <p className="text-sm text-surface-400 mt-0.5">Hot polls</p>
               </div>
-              <Flame size={18} className="text-brand-400" />
+              <Flame size={18} className="text-primary-400" />
             </div>
             {trendingLoading ? (
               <div className="space-y-3">
@@ -859,14 +836,14 @@ export default function DashboardPage() {
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center text-brand-400 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center text-primary-400 flex-shrink-0">
                         <Flame size={14} />
                       </div>
                       <div className="min-w-0">
                         <span className="block text-sm font-medium text-surface-200 truncate">
                           {poll.title || "Untitled poll"}
                         </span>
-                        <span className="text-xs text-surface-500">
+                        <span className="text-xs text-surface-400">
                           {poll.creator?.name ||
                             poll.creator?.username ||
                             "Community"}
@@ -891,6 +868,7 @@ export default function DashboardPage() {
                 icon={Flame}
                 title="No trending polls"
                 description="Check back later for trending content."
+                dark
               />
             )}
           </Card>
@@ -937,7 +915,7 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${
-                      notification.isRead ? "bg-surface-900/50" : "bg-brand-500/5"
+                      notification.isRead ? "bg-surface-900/50" : "bg-primary-500/5"
                     }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center text-surface-400 flex-shrink-0">
@@ -947,12 +925,12 @@ export default function DashboardPage() {
                       <p className="text-sm text-surface-200 line-clamp-2">
                         {notification.title || notification.message}
                       </p>
-                      <p className="text-xs text-surface-500 mt-0.5">
+                      <p className="text-xs text-surface-400 mt-0.5">
                         {formatDate(notification.createdAt)}
                       </p>
                     </div>
                     {!notification.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0 mt-1" />
+                      <span className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1" />
                     )}
                   </motion.div>
                 ))}
@@ -962,6 +940,7 @@ export default function DashboardPage() {
                 icon={Bell}
                 title="No notifications"
                 description="You're all caught up!"
+                dark
               />
             )}
             <div className="mt-4 pt-4 border-t border-surface-800">

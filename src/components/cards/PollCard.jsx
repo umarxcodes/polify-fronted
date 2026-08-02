@@ -127,8 +127,13 @@ function PollOption({
 }
 
 function PollCard({
+  poll,
+  index = 0,
+  showDescription = false,
   selectedOption,
   voteCount,
+  hasVoted,
+  onVote,
   bookmarkStatus,
   onBookmark,
   onShare,
