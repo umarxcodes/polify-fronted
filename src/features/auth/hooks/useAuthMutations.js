@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../api/authApi";
+import { authService } from "../services/authService";
 import { apiClient } from "../../../lib/axios";
 import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ export function useLogin() {
 
 export function useRegister() {
   return useMutation({
-    mutationFn: authApi.register,
+    mutationFn: authService.register,
     onSuccess: () => toast.success("Account created! Please verify your email."),
     onError: (error) => toast.error(error.response?.data?.message || "Registration failed"),
   });
