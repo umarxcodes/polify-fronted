@@ -34,7 +34,7 @@ const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSetting
 const OrganizationsPage = lazy(() => import("./features/organizations/pages/OrganizationsPage"));
 const OrganizationDetailPage = lazy(() => import("./features/organizations/pages/OrganizationDetailPage"));
 const ProfilePollsPage = lazy(() => import("./features/user/pages/ProfilePollsPage"));
-const SettingsPage = lazy(() => import("./features/user/pages/SettingsPage"));
+const SettingsPage = lazy(() => import("./features/settings/pages/SettingsPage"));
 const BookmarksPage = lazy(() => import("./features/bookmarks/pages/BookmarksPage"));
 const ProfilePage = lazy(() => import("./features/user/pages/ProfilePage"));
 const EditProfilePage = lazy(() => import("./features/user/pages/EditProfilePage"));
