@@ -1,9 +1,35 @@
-import { getAnalyticsOverview, getPollAnalytics, getChartData, getTrendingPolls, exportAnalytics } from "../api/analyticsApi";
+import {
+  getAnalyticsOverview,
+  getPollAnalytics,
+  getPollResults,
+  getPollChartData,
+  getTrendingPolls,
+  getUserStats,
+  getUserVoteHistory,
+  getPollStats,
+  getPolls,
+  getPollComments,
+  getUserBookmarks,
+  getUserFollowers,
+  getUserFollowing,
+  getUserProfile,
+  exportPollAnalytics,
+} from "../endpoints/analyticsApi";
 
 export const analyticsService = {
   getAnalyticsOverview,
   getPollAnalytics,
-  getChartData,
+  getPollResults,
+  getPollChartData,
   getTrendingPolls,
-  exportAnalytics,
+  getUserStats,
+  getUserVoteHistory,
+  getPollStats,
+  getPolls,
+  getPollComments,
+  getUserBookmarks,
+  getUserFollowers,
+  getUserFollowing,
+  getUserProfile,
+  exportPollAnalytics,
 };

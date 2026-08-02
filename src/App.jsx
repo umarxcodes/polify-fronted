@@ -43,6 +43,7 @@ const FollowersPage = lazy(() => import("./features/user/pages/FollowersPage"));
 const FollowingPage = lazy(() => import("./features/user/pages/FollowingPage"));
 const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage"));
 const AnalyticsPage = lazy(() => import("./features/analytics/pages/AnalyticsPage"));
+const PollAnalyticsPage = lazy(() => import("./features/analytics/pages/PollAnalytics"));
 const ReportsPage = lazy(() => import("./features/reports/pages/ReportsPage"));
 const VoteHistoryPage = lazy(() => import("./features/voting/pages/VoteHistoryPage"));
 
@@ -164,6 +165,11 @@ function AppRoutes() {
         <Route path="analytics" element={
           <Suspense fallback={<LoadingFallback />}>
             <AnalyticsPage />
+          </Suspense>
+        } />
+        <Route path="analytics/polls/:pollId" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <PollAnalyticsPage />
           </Suspense>
         } />
         <Route path="bookmarks" element={
