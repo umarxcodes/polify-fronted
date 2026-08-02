@@ -1,19 +1,38 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { Search, X, Clock, TrendingUp, ArrowRight } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Search, X, Clock, TrendingUp, ArrowRight, Vote, Eye } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Button } from "../../../components/ui/Button";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { SearchFilters } from "../components/SearchFilters";
 import { toast } from "sonner";
+
+const TABS = [
+  { id: "all", label: "All Results" },
+  { id: "polls", label: "Polls" },
+  { id: "users", label: "Users" },
+  { id: "categories", label: "Categories" },
+];
+
+const TRENDING = [
+  "Remote work productivity",
+  "AI tools for developers",
+  "Design systems 2024",
+  "Leadership qualities",
+  "Best programming languages",
+];
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [recentSearches, setRecentSearches] = useState(() => {
     try {
       const saved = localStorage.getItem("pollify_recent_searches");
@@ -22,16 +41,9 @@ export default function SearchPage() {
       return [];
     }
   });
-  const [activeTab, setActiveTab] = useState("all");
+  const [filters, setFilters] = useState({ sort: "newest" });
   const navigate = useNavigate();
-
-  const trendingSearches = [
-    "Remote work productivity",
-    "AI tools for developers",
-    "Design systems 2024",
-    "Leadership qualities",
-    "Best programming languages",
-  ];
+  const debounceRef = useRef(null);
 
   const saveRecentSearch = useCallback((searchQuery) => {
     setRecentSearches(prev => {
@@ -42,36 +54,62 @@ export default function SearchPage() {
     });
   }, []);
 
-  const handleSearch = async (searchQuery = query) => {
-    if (!searchQuery.trim() || searchQuery.length < 2) {
+  const performSearch = useCallback(async (searchQuery) => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       toast.error("Please enter at least 2 characters");
       return;
     }
 
     setLoading(true);
+    setError(null);
     saveRecentSearch(searchQuery);
 
     try {
-      const [pollsRes, usersRes] = await Promise.all([
-        apiClient.get("/search/polls", { params: { q: searchQuery, limit: 20 } }),
-        apiClient.get("/search/users", { params: { q: searchQuery, limit: 10 } }),
+      const params = {
+        q: searchQuery,
+        limit: 20,
+        sort: filters.sort || "newest",
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([k, v]) => k !== "sort" && k !== "q" && v)
+        ),
+      };
+
+      const [pollsRes, usersRes, categoriesRes] = await Promise.all([
+        apiClient.get("/search/polls", { params }),
+        apiClient.get("/search/users", { params: { q: searchQuery, limit: 20 } }),
+        apiClient.get("/search/categories", { params: { q: searchQuery, limit: 20 } }),
       ]);
 
       setResults({
-        polls: pollsRes.data?.data || pollsRes.data || [],
-        users: usersRes.data?.data || usersRes.data || [],
+        polls: pollsRes.data?.data?.polls || [],
+        pollsPagination: pollsRes.data?.data?.pagination || {},
+        users: usersRes.data?.data?.users || [],
+        usersPagination: usersRes.data?.data?.pagination || {},
+        categories: categoriesRes.data?.data?.categories || [],
       });
       setActiveTab("all");
-    } catch (error) {
-      toast.error("Search failed", { description: error.message });
+    } catch (err) {
+      const message = err.message || "Search failed. Please try again.";
+      setError(message);
+      toast.error("Search failed", { description: message });
     } finally {
       setLoading(false);
+    }
+  }, [filters, saveRecentSearch]);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length >= 2) {
+      debounceRef.current = setTimeout(() => performSearch(value), 400);
     }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleSearch();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      performSearch(query);
     }
   };
 
@@ -79,6 +117,28 @@ export default function SearchPage() {
     setRecentSearches([]);
     localStorage.removeItem("pollify_recent_searches");
   };
+
+  const handleRetry = () => {
+    if (query.trim()) performSearch(query);
+  };
+
+  const visibleResults = (() => {
+    if (!results) return [];
+    if (activeTab === "all") {
+      return [
+        ...(results.polls || []).map(item => ({ ...item, _type: "poll" })),
+        ...(results.users || []).map(item => ({ ...item, _type: "user" })),
+        ...(results.categories || []).map(item => ({ ...item, _type: "category" })),
+      ];
+    }
+    if (activeTab === "polls") return (results.polls || []).map(item => ({ ...item, _type: "poll" }));
+    if (activeTab === "users") return (results.users || []).map(item => ({ ...item, _type: "user" }));
+    if (activeTab === "categories") return (results.categories || []).map(item => ({ ...item, _type: "category" }));
+    return [];
+  })();
+
+  const hasResults = results && (results.polls?.length || results.users?.length || results.categories?.length);
+  const hasNoResults = results && !loading && !hasResults;
 
   return (
     <motion.div
@@ -88,50 +148,50 @@ export default function SearchPage() {
       className="max-w-4xl mx-auto space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Search</h1>
-        <p className="text-surface-500 mt-2">Find polls, people, and topics.</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Search</h1>
+        <p className="text-surface-400 mt-2">Find polls, people, and topics.</p>
       </div>
 
-      <Card className="p-2">
+      <Card dark className="p-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-3 px-4">
             <Search size={20} className="text-surface-400 flex-shrink-0" />
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Search polls, people, or topics..."
-              className="flex-1 py-3 bg-transparent text-sm text-surface-900 placeholder:text-surface-400 outline-none"
+              className="flex-1 py-3 bg-transparent text-sm text-white placeholder:text-surface-500 outline-none"
               autoFocus
             />
             {query && (
               <button
-                onClick={() => { setQuery(""); setResults(null); }}
-                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
+                onClick={() => { setQuery(""); setResults(null); setError(null); }}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
               >
                 <X size={18} />
               </button>
             )}
           </div>
-          <Button onClick={() => handleSearch()} loading={loading} size="sm">
+          <Button onClick={() => performSearch(query)} loading={loading} size="sm">
             Search
           </Button>
         </div>
       </Card>
 
-      {!results && !loading && (
+      {!results && !loading && !error && (
         <div className="space-y-6">
           {recentSearches.length > 0 && (
-            <Card className="p-6">
+            <Card dark className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-surface-900 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <Clock size={16} className="text-surface-400" />
                   Recent Searches
                 </h3>
                 <button
                   onClick={clearRecentSearches}
-                  className="text-xs text-surface-500 hover:text-danger-600 transition-colors"
+                  className="text-xs text-surface-400 hover:text-white transition-colors"
                 >
                   Clear all
                 </button>
@@ -140,8 +200,8 @@ export default function SearchPage() {
                 {recentSearches.map((search, index) => (
                   <button
                     key={index}
-                    onClick={() => { setQuery(search); handleSearch(search); }}
-                    className="px-3 py-1.5 rounded-lg bg-surface-100 text-sm text-surface-700 hover:bg-surface-200 transition-colors"
+                    onClick={() => { setQuery(search); performSearch(search); }}
+                    className="px-3 py-1.5 rounded-lg bg-surface-800 text-sm text-surface-300 hover:bg-surface-700 transition-colors"
                   >
                     {search}
                   </button>
@@ -150,23 +210,23 @@ export default function SearchPage() {
             </Card>
           )}
 
-          <Card className="p-6">
-            <h3 className="text-sm font-semibold text-surface-900 flex items-center gap-2 mb-4">
-              <TrendingUp size={16} className="text-brand-500" />
+          <Card dark className="p-6">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
+              <TrendingUp size={16} className="text-primary-400" />
               Trending Searches
             </h3>
             <div className="space-y-2">
-              {trendingSearches.map((search, index) => (
+              {TRENDING.map((search, index) => (
                 <button
                   key={index}
-                  onClick={() => { setQuery(search); handleSearch(search); }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-surface-50 transition-colors group"
+                  onClick={() => { setQuery(search); performSearch(search); }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-surface-800 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-surface-400 w-6">{index + 1}</span>
-                    <span className="text-sm text-surface-700 group-hover:text-surface-900">{search}</span>
+                    <span className="text-sm font-medium text-surface-500 w-6">{index + 1}</span>
+                    <span className="text-sm text-surface-300 group-hover:text-white">{search}</span>
                   </div>
-                  <ArrowRight size={16} className="text-surface-400 group-hover:text-surface-600 transition-colors" />
+                  <ArrowRight size={16} className="text-surface-500 group-hover:text-surface-300 transition-colors" />
                 </button>
               ))}
             </div>
@@ -174,120 +234,185 @@ export default function SearchPage() {
         </div>
       )}
 
+      {error && !loading && (
+        <ErrorState
+          error={error}
+          onRetry={handleRetry}
+          dark
+        />
+      )}
+
       {loading && (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-6">
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-full mb-4" />
+            <Card key={i} dark className="p-6">
+              <Skeleton dark className="h-6 w-3/4 mb-2" />
+              <Skeleton dark className="h-4 w-full mb-4" />
               <div className="space-y-2">
-                <Skeleton className="h-12 w-full rounded-xl" />
-                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton dark className="h-12 w-full rounded-xl" />
+                <Skeleton dark className="h-12 w-full rounded-xl" />
               </div>
             </Card>
           ))}
         </div>
       )}
 
-      {results && !loading && (
+      {!loading && !error && hasResults && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            {["all", "polls", "users"].map((tab) => (
+            {TABS.map((tab) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={`
                   px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
-                  ${activeTab === tab
-                    ? "bg-brand-500 text-white shadow-sm shadow-brand-500/25"
-                    : "bg-white text-surface-600 border border-surface-200 hover:border-surface-300"
+                  ${activeTab === tab.id
+                    ? "bg-primary-500 text-white shadow-sm shadow-primary-500/25"
+                    : "bg-surface-800 text-surface-300 hover:bg-surface-700"
                   }
                 `}
               >
-                {tab === "all" ? "All Results" : tab === "polls" ? "Polls" : "Users"}
+                {tab.label}
+                {tab.id !== "all" && results[tab.id + "Pagination"]?.total > 0 && (
+                  <span className="ml-1.5 text-xs opacity-75">
+                    ({results[tab.id + "Pagination"].total})
+                  </span>
+                )}
               </button>
             ))}
           </div>
 
-          {(activeTab === "all" || activeTab === "polls") && results.polls?.length > 0 && (
-            <div className="space-y-4">
-              {activeTab === "all" && (
-                <h3 className="text-sm font-semibold text-surface-900">Polls ({results.polls.length})</h3>
-              )}
-              {results.polls.map((poll, index) => (
-                <motion.div
-                  key={poll._id || index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card hover className="p-6 cursor-pointer" onClick={() => navigate(`/polls/${poll._id}`)}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Badge variant="secondary" size="sm" className="mb-2">
-                          {poll.category || "General"}
-                        </Badge>
-                        <h4 className="text-base font-semibold text-surface-900 mb-1">{poll.title}</h4>
-                        {poll.description && (
-                          <p className="text-sm text-surface-600 line-clamp-2">{poll.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 mt-3">
-                          <span className="text-xs text-surface-500">{poll.totalVotes?.toLocaleString() || 0} votes</span>
-                          <span className="text-xs text-surface-400">·</span>
-                          <span className="text-xs text-surface-500">{poll.options?.length || 0} options</span>
+          <SearchFilters
+            filters={filters}
+            onFilterChange={setFilters}
+            onClear={() => setFilters({ sort: "newest" })}
+            resultCount={visibleResults.length}
+            dark
+          />
+
+          <div className="space-y-3">
+            {visibleResults.map((item, index) => {
+              if (item._type === "poll") {
+                return (
+                  <motion.div
+                    key={item._id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card hover dark className="p-5 cursor-pointer" onClick={() => navigate(`/polls/${item._id}`)}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="secondary" size="sm" dark>
+                              {item.category || "General"}
+                            </Badge>
+                            {item.isActive !== false && (
+                              <Badge variant="success" size="sm" dot dark>
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                          <h4 className="text-base font-semibold text-white mb-1 truncate">
+                            {item.title || "Untitled poll"}
+                          </h4>
+                          {item.description && (
+                            <p className="text-sm text-surface-400 line-clamp-2 mb-3">
+                              {item.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1 text-xs text-surface-400">
+                              <Vote size={14} />
+                              {item.totalVotes?.toLocaleString() || 0} votes
+                            </span>
+                            <span className="flex items-center gap-1 text-xs text-surface-400">
+                              <Eye size={14} />
+                              {item.views?.toLocaleString() || 0} views
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
+                    </Card>
+                  </motion.div>
+                );
+              }
 
-          {(activeTab === "all" || activeTab === "users") && results.users?.length > 0 && (
-            <div className="space-y-4">
-              {activeTab === "all" && (
-                <h3 className="text-sm font-semibold text-surface-900">Users ({results.users.length})</h3>
-              )}
-              {results.users.map((user, index) => (
-                <motion.div
-                  key={user._id || index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card hover className="p-4 cursor-pointer" onClick={() => navigate(`/profile/${user.username}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold">
-                        {user.name?.split(" ").map(n => n[0]).join("") || "U"}
+              if (item._type === "user") {
+                return (
+                  <motion.div
+                    key={item._id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card hover dark className="p-4 cursor-pointer" onClick={() => navigate(`/profile/${item.username}`)}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                          {item.name?.split(" ").map(n => n[0]).join("") || "U"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-white truncate">{item.name}</h4>
+                          <p className="text-xs text-surface-400">@{item.username}</p>
+                          {item.bio && (
+                            <p className="text-xs text-surface-500 mt-1 line-clamp-1">{item.bio}</p>
+                          )}
+                        </div>
+                        <Badge variant="secondary" size="sm" dark>
+                          {item.stats?.polls || 0} polls
+                        </Badge>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-surface-900">{user.name}</h4>
-                        <p className="text-xs text-surface-500">@{user.username}</p>
-                        {user.bio && <p className="text-xs text-surface-600 mt-1 line-clamp-1">{user.bio}</p>}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-surface-900">{user.stats?.polls || 0}</p>
-                        <p className="text-xs text-surface-500">polls</p>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
+                    </Card>
+                  </motion.div>
+                );
+              }
 
-          {((activeTab === "all" && !results.polls?.length && !results.users?.length) ||
-            (activeTab === "polls" && !results.polls?.length) ||
-            (activeTab === "users" && !results.users?.length)) && (
-            <EmptyState
-              type="notFound"
-              title="No results found"
-              description="Try adjusting your search query"
-              icon={Search}
-            />
-          )}
+              if (item._type === "category") {
+                return (
+                  <motion.div
+                    key={item._id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Link to={`/search?category=${encodeURIComponent(item._id || item.name || item)}`}>
+                      <Card hover dark className="p-4 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-semibold text-white">
+                              {item._id || item.name || item}
+                            </h4>
+                            <p className="text-xs text-surface-400 mt-0.5">
+                              {item.count || 0} polls · {(item.totalVotes || 0).toLocaleString()} votes
+                            </p>
+                          </div>
+                          <Badge variant="primary" size="sm" dark>
+                            {item.count || 0}
+                          </Badge>
+                        </div>
+                      </Card>
+                    </Link>
+                  </motion.div>
+                );
+              }
+              return null;
+            })}
+          </div>
         </div>
+      )}
+
+      {hasNoResults && (
+        <EmptyState
+          icon={Search}
+          title="No results found"
+          description={`No results for "${query}". Try another keyword or check your filters.`}
+          action={
+            <Button variant="secondary" size="sm" onClick={() => { setQuery(""); setResults(null); }}>
+              Clear search
+            </Button>
+          }
+          dark
+        />
       )}
     </motion.div>
   );

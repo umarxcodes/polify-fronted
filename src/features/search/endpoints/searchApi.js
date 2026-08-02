@@ -10,6 +10,16 @@ export const searchUsers = async (query, params = {}) => {
   return data;
 };
 
+export const searchCategories = async (query, params = {}) => {
+  const { data } = await apiClient.get("/search/categories", { params: { q: query, ...params } });
+  return data;
+};
+
+export const globalSearch = async (query) => {
+  const { data } = await apiClient.get("/search", { params: { q: query } });
+  return data;
+};
+
 export const getSuggestions = async (query) => {
   const { data } = await apiClient.get("/search/suggestions", { params: { q: query } });
   return data;
@@ -30,11 +40,6 @@ export const getPopularPolls = async (params = {}) => {
   return data;
 };
 
-export const getCategories = async () => {
-  const { data } = await apiClient.get("/search/categories");
-  return data;
-};
-
 export const getEndingSoonPolls = async (params = {}) => {
   const { data } = await apiClient.get("/search/ending-soon", { params });
   return data;
@@ -45,8 +50,8 @@ export const getRecommendedPolls = async (params = {}) => {
   return data;
 };
 
-export const getSearchHistory = async () => {
-  const { data } = await apiClient.get("/search/history");
+export const getSearchHistory = async (params = {}) => {
+  const { data } = await apiClient.get("/search/history", { params });
   return data;
 };
 
@@ -57,5 +62,15 @@ export const deleteSearchHistory = async () => {
 
 export const deleteSearchHistoryItem = async (historyId) => {
   const { data } = await apiClient.delete(`/search/history/${historyId}`);
+  return data;
+};
+
+export const getRecentlyViewed = async (params = {}) => {
+  const { data } = await apiClient.get("/search/recent", { params });
+  return data;
+};
+
+export const addRecentlyViewed = async (pollId) => {
+  const { data } = await apiClient.post(`/search/recent/${pollId}`);
   return data;
 };

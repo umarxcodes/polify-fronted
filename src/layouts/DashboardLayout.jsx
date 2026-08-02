@@ -37,7 +37,7 @@ const navItems = [
   { icon: Bookmark, label: 'Bookmarks', href: '/bookmarks' },
   { icon: BarChart3, label: 'Analytics', href: '/analytics' },
   { icon: Bell, label: 'Notifications', href: '/notifications' },
-  { icon: Search, label: 'Explore', href: '/search' },
+  { icon: Search, label: 'Discover', href: '/discover' },
 ]
 
 const bottomNavItems = [

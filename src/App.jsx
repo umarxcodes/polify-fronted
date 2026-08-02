@@ -22,6 +22,7 @@ const CreatePollPage = lazy(() => import("./features/polls/pages/CreatePollPage"
 const EditPollPage = lazy(() => import("./features/polls/pages/EditPollPage"));
 const PollDetailPage = lazy(() => import("./features/polls/pages/PollDetailPage"));
 const SearchPage = lazy(() => import("./features/search/pages/SearchPage"));
+const DiscoveryPage = lazy(() => import("./features/search/pages/DiscoveryPage"));
 const AdminDashboardPage = lazy(() => import("./features/admin/pages/AdminDashboardPage"));
 const AdminUsersPage = lazy(() => import("./features/admin/pages/AdminUsersPage"));
 const AdminPollsPage = lazy(() => import("./features/admin/pages/AdminPollsPage"));
@@ -150,9 +151,14 @@ function AppRoutes() {
             <EditPollPage />
           </Suspense>
         } />
-        <Route path="search" element={
+                <Route path="search" element={
           <Suspense fallback={<LoadingFallback />}>
             <SearchPage />
+          </Suspense>
+        } />
+        <Route path="discover" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <DiscoveryPage />
           </Suspense>
         } />
         <Route path="analytics" element={
