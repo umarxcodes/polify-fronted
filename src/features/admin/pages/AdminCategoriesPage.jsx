@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import {
   Search,
   MoreHorizontal,
@@ -18,6 +17,9 @@ import { Badge } from "../../../components/ui/Badge";
 import { Dropdown } from "../../../components/ui/Dropdown";
 import { Input } from "../../../components/ui/Input";
 import { Dialog } from "../../../components/ui/Dialog";
+import { Table } from "../../../components/ui/Table";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 import { toast } from "sonner";
 
 const unwrap = (response) => response.data?.data || response.data;
@@ -111,6 +113,56 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  const columns = [
+    {
+      key: "name",
+      label: "Category",
+      render: (name, category) => (
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+            <FolderOpen size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white truncate">{category.name}</p>
+            <p className="text-xs text-surface-500 truncate">{category.description || "No description"}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (_, category) => (
+        <Badge variant={category.isActive !== false ? "success" : "secondary"} size="sm" dot>
+          {category.isActive !== false ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      align: "right",
+      render: (_, category) => (
+        <Dropdown
+          align="right"
+          width={160}
+          dark
+          trigger={
+            <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
+              <MoreHorizontal size={16} />
+            </button>
+          }
+          items={[
+            { label: "Edit", icon: Edit, onClick: () => openEditDialog(category) },
+            ...(category.isActive !== false
+              ? [{ label: "Delete", icon: Trash2, onClick: () => deleteMutation.mutate(category._id), danger: true }]
+              : [{ label: "Restore", icon: RotateCcw, onClick: () => restoreMutation.mutate(category._id) }]),
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -130,6 +182,7 @@ export default function AdminCategoriesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             icon={<Search size={16} />}
+            dark
           />
         </div>
       </Card>
@@ -148,65 +201,25 @@ export default function AdminCategoriesPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-          </div>
+          <ErrorState error={error.message} onRetry={refetch} dark />
         ) : categories.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-              <FolderOpen size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-surface-200 mb-1">No categories found</h3>
-            <p className="text-sm text-surface-400">Create your first category to get started.</p>
-          </div>
+          <EmptyState
+            icon={FolderOpen}
+            title="No categories found"
+            description="Create your first category to get started."
+            dark
+          />
         ) : (
-          <div className="divide-y divide-surface-800">
-            {categories.map((category, index) => (
-              <motion.div
-                key={category._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-                className="flex items-center justify-between p-4 hover:bg-surface-800/50 transition-colors"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 flex items-center justify-center text-brand-400 flex-shrink-0">
-                    <FolderOpen size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{category.name}</p>
-                    <p className="text-xs text-surface-500 truncate">{category.description || "No description"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Badge variant={category.isActive !== false ? "success" : "secondary"} size="sm" dot>
-                    {category.isActive !== false ? "Active" : "Inactive"}
-                  </Badge>
-                  <Dropdown
-                    align="right"
-                    width={160}
-                    trigger={
-                      <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
-                        <MoreHorizontal size={16} />
-                      </button>
-                    }
-                    items={[
-                      { label: "Edit", icon: Edit, onClick: () => openEditDialog(category) },
-                      ...(category.isActive !== false
-                        ? [{ label: "Delete", icon: Trash2, onClick: () => deleteMutation.mutate(category._id), danger: true }]
-                        : [{ label: "Restore", icon: RotateCcw, onClick: () => restoreMutation.mutate(category._id) }]),
-                    ]}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <Table
+            columns={columns}
+            data={categories}
+            dark
+          />
         )}
       </Card>
 
       {/* Create/Edit Dialog */}
-      <Dialog isOpen={dialogOpen} onClose={closeDialog} title={editingCategory ? "Edit Category" : "Create Category"}>
+      <Dialog isOpen={dialogOpen} onClose={closeDialog} title={editingCategory ? "Edit Category" : "Create Category"} dark>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-surface-300 mb-1.5">Name</label>
@@ -225,7 +238,7 @@ export default function AdminCategoriesPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Category description"
               rows={3}
-              className="w-full px-4 py-2.5 rounded-xl bg-surface-800 border border-surface-700 text-sm text-white placeholder:text-surface-500 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none"
+               className="w-full px-4 py-2.5 rounded-xl bg-surface-800 border border-surface-700 text-sm text-white placeholder:text-surface-500 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all resize-none"
             />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">

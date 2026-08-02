@@ -2,9 +2,12 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { MessageCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 import { useComments } from "../hooks/useComments";
 import CommentInput from "../components/CommentInput";
 import CommentCard from "../components/CommentCard";
@@ -45,38 +48,13 @@ export default function CommentsPage() {
     isReporting,
   } = useComments(pollId);
 
-  if (error) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard">
-            <Button variant="ghost" size="sm" icon={<ArrowLeft size={18} />}>
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Comments</h1>
-            <p className="text-surface-400 mt-1">Join the conversation</p>
-          </div>
-        </div>
-        <Card dark className="p-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-danger-50 flex items-center justify-center text-danger-500 mx-auto mb-4">
-            <MessageCircle size={28} />
-          </div>
-          <h3 className="text-lg font-semibold text-surface-900 mb-1">
-            Failed to load comments
-          </h3>
-          <p className="text-sm text-surface-500 mb-4">{error.message}</p>
-          <Button onClick={() => refetch()} variant="secondary">
-            Try again
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-3xl mx-auto space-y-6"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/dashboard">
@@ -85,7 +63,7 @@ export default function CommentsPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Comments</h1>
+            <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Comments</h1>
             <p className="text-surface-400 mt-1">Join the conversation</p>
           </div>
         </div>
@@ -124,45 +102,54 @@ export default function CommentsPage() {
                 <CommentSkeleton key={i} />
               ))}
             </div>
+          ) : error ? (
+            <ErrorState
+              error={error.message}
+              onRetry={() => refetch()}
+              title="Failed to load comments"
+              dark
+            />
           ) : comments.length > 0 ? (
             <div className="space-y-1">
               {comments.map((comment, index) => (
-                <CommentCard
+                <motion.div
                   key={comment._id || index}
-                  comment={comment}
-                  currentUserId={null}
-                  pollOwnerId={null}
-                  onReply={replyTo}
-                  onEdit={editComment}
-                  onDelete={deleteComment}
-                  onLike={like}
-                  onUnlike={unlike}
-                  onPin={pin}
-                  onUnpin={unpin}
-                  onReport={report}
-                  isLiking={isLiking}
-                  isReplying={false}
-                  isPinning={isPinning}
-                  isReporting={isReporting}
-                  index={index}
-                />
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <CommentCard
+                    comment={comment}
+                    currentUserId={null}
+                    pollOwnerId={null}
+                    onReply={replyTo}
+                    onEdit={editComment}
+                    onDelete={deleteComment}
+                    onLike={like}
+                    onUnlike={unlike}
+                    onPin={pin}
+                    onUnpin={unpin}
+                    onReport={report}
+                    isLiking={isLiking}
+                    isReplying={false}
+                    isPinning={isPinning}
+                    isReporting={isReporting}
+                    index={index}
+                  />
+                </motion.div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-                <MessageCircle size={24} />
-              </div>
-              <h3 className="text-lg font-semibold text-surface-200 mb-1">
-                No comments yet
-              </h3>
-              <p className="text-sm text-surface-400">
-                Be the first to start the discussion!
-              </p>
-            </div>
+            <EmptyState
+              type="empty"
+              title="No comments yet"
+              description="Be the first to start the discussion!"
+              icon={MessageCircle}
+              dark
+            />
           )}
         </div>
       </Card>
-    </div>
+    </motion.div>
   );
 }

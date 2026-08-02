@@ -27,8 +27,13 @@ function PollCard({ poll, index = 0 }) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" size="sm">{poll.category || "General"}</Badge>
-              <Badge variant={poll.isActive ? "success" : "secondary"} size="sm">
+              <Badge variant="secondary" size="sm">
+                {poll.category || "General"}
+              </Badge>
+              <Badge
+                variant={poll.isActive ? "success" : "secondary"}
+                size="sm"
+              >
                 {poll.isActive ? "Active" : "Closed"}
               </Badge>
             </div>
@@ -38,7 +43,9 @@ function PollCard({ poll, index = 0 }) {
               </h4>
             </Link>
             {poll.description && (
-              <p className="text-sm text-surface-600 mt-1 line-clamp-2">{poll.description}</p>
+              <p className="text-sm text-surface-600 mt-1 line-clamp-2">
+                {poll.description}
+              </p>
             )}
             <div className="flex items-center gap-4 mt-3">
               <span className="flex items-center gap-1 text-xs text-surface-500">
@@ -56,18 +63,25 @@ function PollCard({ poll, index = 0 }) {
             </div>
           </div>
           <Dropdown
-            trigger={<button className="p-2 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"><MoreHorizontal size={18} /></button>}
+            trigger={
+              <button className="p-2 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors">
+                <MoreHorizontal size={18} />
+              </button>
+            }
             items={menuItems}
             align="right"
           />
         </div>
 
-        {/* Mini results preview */}
         {poll.options && poll.options.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-surface-100">
+          <div className="mt-4 pt-4 border-t border-surface-200">
             <div className="space-y-2">
               {poll.options.slice(0, 3).map((option, idx) => {
-                const percentage = poll.totalVotes ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
+                const percentage = poll.totalVotes
+                  ? Math.round(
+                      (option.votes / poll.totalVotes) * 100
+                    )
+                  : 0;
                 return (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="flex-1">
@@ -78,7 +92,9 @@ function PollCard({ poll, index = 0 }) {
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-medium text-surface-600 w-12 text-right">{percentage}%</span>
+                    <span className="text-xs font-medium text-surface-600 w-12 text-right">
+                      {percentage}%
+                    </span>
                   </div>
                 );
               })}
@@ -95,14 +111,19 @@ export default function ProfilePollsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["profile", "polls"],
     queryFn: async () => {
-      const response = await apiClient.get("/polls", { params: { limit: 100 } });
+      const response = await apiClient.get("/polls", {
+        params: { limit: 100 },
+      });
       const body = response.data;
       const allPolls = body?.data?.polls || body?.polls || [];
       const userId = user?.id;
       const mine = Array.isArray(allPolls)
         ? allPolls.filter((poll) => {
             const created = poll.createdBy;
-            return created && (created._id === userId || created === userId);
+            return (
+              created &&
+              (created._id === userId || created === userId)
+            );
           })
         : [];
       return mine;
@@ -134,27 +155,48 @@ export default function ProfilePollsPage() {
     return (
       <div className="text-center py-12">
         <p className="text-danger-600">{error.message}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Try again</Button>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-4"
+        >
+          Try again
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-surface-900">My Polls</h2>
-          <p className="text-surface-500 mt-1">Polls you've created</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-surface-900">
+              My Polls
+            </h2>
+            <p className="text-surface-500 mt-1">
+              Polls you've created
+            </p>
+          </div>
+          <Link to="/polls/create">
+            <Button variant="primary" icon={<Vote size={18} />}>
+              Create Poll
+            </Button>
+          </Link>
         </div>
-        <Link to="/polls/create">
-          <Button variant="primary" icon={<Vote size={18} />}>Create Poll</Button>
-        </Link>
-      </div>
+      </motion.div>
 
       {polls.length > 0 ? (
         <div className="space-y-4">
           {polls.map((poll, index) => (
-            <PollCard key={poll._id || index} poll={poll} index={index} />
+            <PollCard
+              key={poll._id || index}
+              poll={poll}
+              index={index}
+            />
           ))}
         </div>
       ) : (
@@ -162,10 +204,16 @@ export default function ProfilePollsPage() {
           <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center text-surface-400 mx-auto mb-4">
             <Vote size={28} />
           </div>
-          <h3 className="text-lg font-semibold text-surface-900 mb-1">No polls yet</h3>
-          <p className="text-sm text-surface-500 mb-4">Create your first poll to see it here.</p>
+          <h3 className="text-lg font-semibold text-surface-900 mb-1">
+            No polls yet
+          </h3>
+          <p className="text-sm text-surface-500 mb-4">
+            Create your first poll to see it here.
+          </p>
           <Link to="/polls/create">
-            <Button variant="primary" icon={<Vote size={18} />}>Create Poll</Button>
+            <Button variant="primary" icon={<Vote size={18} />}>
+              Create Poll
+            </Button>
           </Link>
         </Card>
       )}

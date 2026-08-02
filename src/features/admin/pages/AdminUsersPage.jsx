@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MoreHorizontal,
@@ -12,12 +12,16 @@ import {
 } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Dropdown } from "../../../components/ui/Dropdown";
 import { Input } from "../../../components/ui/Input";
+import { Select } from "../../../components/ui/Select";
+import { Table } from "../../../components/ui/Table";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { Pagination } from "../../../components/ui/Pagination";
 import { toast } from "sonner";
 
 const formatDate = (value) => {
@@ -30,6 +34,7 @@ const unwrap = (response) => response.data?.data || response.data;
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -88,9 +93,80 @@ export default function AdminUsersPage() {
     }
   };
 
+  const columns = [
+    {
+      key: "user",
+      label: "User",
+      render: (_, user) => (
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={user.profileImage}
+            fallback={user.name?.split(" ").map(n => n[0]).join("") || "U"}
+            size="sm"
+            color="brand"
+          />
+          <div>
+            <p className="text-sm font-medium text-white truncate max-w-[200px]">{user.name}</p>
+            <p className="text-xs text-surface-500 truncate max-w-[200px]">@{user.username}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "role",
+      label: "Role",
+      render: (role) => <Badge variant={getRoleVariant(role)} size="sm">{role}</Badge>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (_, user) => {
+        if (user.isSuspended) return <Badge variant="danger" size="sm" dot>Suspended</Badge>;
+        if (user.isVerified) return <Badge variant="success" size="sm" dot>Verified</Badge>;
+        return <Badge variant="warning" size="sm" dot>Unverified</Badge>;
+      },
+    },
+    {
+      key: "createdAt",
+      label: "Joined",
+      render: (value) => <span className="text-sm text-surface-400">{formatDate(value)}</span>,
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      align: "right",
+      render: (_, user) => (
+        <Dropdown
+          align="right"
+          width={180}
+          dark
+          trigger={
+            <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
+              <MoreHorizontal size={16} />
+            </button>
+          }
+          items={[
+            {
+              label: "View Profile",
+              icon: Eye,
+              onClick: () => navigate(`/profile/${user.username}`),
+            },
+            ...(user.role !== "super_admin"
+              ? [
+                  user.isSuspended
+                    ? { label: "Unsuspend", icon: UserCheck, onClick: () => unsuspendMutation.mutate(user._id) }
+                    : { label: "Suspend", icon: UserX, onClick: () => suspendMutation.mutate(user._id), danger: user.isSuspended ? false : true },
+                  { label: "Delete", icon: Trash2, onClick: () => deleteMutation.mutate(user._id), danger: true },
+                ]
+              : []),
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Users</h1>
@@ -98,7 +174,6 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <Card dark className="p-4">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1">
@@ -107,25 +182,25 @@ export default function AdminUsersPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               icon={<Search size={16} />}
+              dark
             />
           </div>
           <div className="w-full md:w-48">
-            <select
+            <Select
               value={roleFilter}
               onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-              className="w-full h-10 px-3 rounded-xl bg-surface-800 border border-surface-700 text-sm text-surface-100 outline-none focus:border-brand-500"
+              dark
             >
               <option value="">All Roles</option>
               <option value="user">User</option>
               <option value="admin">Admin</option>
               <option value="moderator">Moderator</option>
               <option value="super_admin">Super Admin</option>
-            </select>
+            </Select>
           </div>
         </div>
       </Card>
 
-      {/* Users table */}
       <Card dark className="overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-3">
@@ -141,129 +216,29 @@ export default function AdminUsersPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-          </div>
+          <ErrorState error={error.message} onRetry={refetch} dark />
         ) : users.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-              <Users size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-surface-200 mb-1">No users found</h3>
-            <p className="text-sm text-surface-400">Try adjusting your search or filters.</p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No users found"
+            description="Try adjusting your search or filters."
+            dark
+          />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-surface-800">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">User</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Role</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Joined</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-800">
-                  {users.map((user, index) => (
-                    <motion.tr
-                      key={user._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="hover:bg-surface-800/50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar
-                            src={user.profileImage}
-                            fallback={user.name?.split(" ").map(n => n[0]).join("") || "U"}
-                            size="sm"
-                            color="brand"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-white truncate max-w-[200px]">{user.name}</p>
-                            <p className="text-xs text-surface-500 truncate max-w-[200px]">@{user.username}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={getRoleVariant(user.role)} size="sm">
-                          {user.role}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {user.isSuspended ? (
-                            <Badge variant="danger" size="sm" dot>Suspended</Badge>
-                          ) : user.isVerified ? (
-                            <Badge variant="success" size="sm" dot>Verified</Badge>
-                          ) : (
-                            <Badge variant="warning" size="sm" dot>Unverified</Badge>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-surface-400">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Dropdown
-                          align="right"
-                          width={180}
-                          trigger={
-                            <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
-                              <MoreHorizontal size={16} />
-                            </button>
-                          }
-                          items={[
-                            {
-                              label: "View Profile",
-                              icon: Eye,
-                              onClick: () => window.open(`/profile/${user.username}`, "_blank"),
-                            },
-                            ...(user.role !== "super_admin"
-                              ? [
-                                  user.isSuspended
-                                    ? { label: "Unsuspend", icon: UserCheck, onClick: () => unsuspendMutation.mutate(user._id) }
-                                    : { label: "Suspend", icon: UserX, onClick: () => suspendMutation.mutate(user._id), danger: user.isSuspended ? false : true },
-                                  { label: "Delete", icon: Trash2, onClick: () => deleteMutation.mutate(user._id), danger: true },
-                                ]
-                              : []),
-                          ]}
-                        />
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
+            <Table
+              columns={columns}
+              data={users}
+              dark
+            />
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-surface-800">
-                <p className="text-sm text-surface-400">
-                  Page {pagination.page || 1} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
+              <div className="px-6 py-4 border-t border-surface-800">
+                <Pagination
+                  currentPage={pagination.page || 1}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  dark
+                />
               </div>
             )}
           </>

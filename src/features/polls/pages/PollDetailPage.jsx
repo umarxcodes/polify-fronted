@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Vote,
   Clock,
   Eye,
   Share2,
-  TrendingUp,
   ArrowLeft,
   MoreHorizontal,
   Flag,
@@ -25,6 +24,8 @@ import { Badge } from '../../../components/ui/Badge'
 import { Avatar } from '../../../components/ui/Avatar'
 import { Skeleton } from '../../../components/ui/Skeleton'
 import { Dropdown } from '../../../components/ui/Dropdown'
+import { EmptyState } from '../../../components/ui/EmptyState'
+import { PollOption } from '../../../components/cards/PollCard'
 import { useVoting } from '../../voting/hooks/useVoting'
 import VoteResults from '../../voting/components/VoteResults'
 import { useComments } from '../../comments/hooks/useComments'
@@ -32,109 +33,10 @@ import CommentCard from '../../comments/components/CommentCard'
 import CommentInput from '../../comments/components/CommentInput'
 import BookmarkButton from '../../bookmarks/components/BookmarkButton'
 
-function PollOption({
-  option,
-  percentage,
-  isSelected,
-  isWinner,
-  onSelect,
-  disabled,
-  index,
-  pollType,
-}) {
-  const isMultiple = pollType === 'multiple';
-  
-  return (
-    <motion.button
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      onClick={() => !disabled && onSelect(option._id)}
-      disabled={disabled}
-      className={`
-        relative w-full text-left p-5 rounded-xl border-2 transition-all duration-300
-        ${
-          isSelected
-            ? 'border-brand-500 bg-brand-50/50'
-            : 'border-surface-200 hover:border-surface-300 bg-white'
-        }
-        ${disabled ? 'cursor-default' : 'cursor-pointer'}
-      `}
-    >
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
-        className={`
-          absolute inset-0 rounded-xl origin-left
-          ${isWinner ? 'bg-gradient-to-r from-brand-500/10 to-brand-600/5' : 'bg-surface-50'}
-        `}
-      />
-
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className={`
-            w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0
-            ${isSelected ? 'border-brand-500 bg-brand-500' : 'border-surface-300'}
-          `}
-          >
-            {isSelected && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', bounce: 0.4 }}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </motion.div>
-            )}
-            {isMultiple && !isSelected && (
-              <div className="w-3 h-3 rounded-sm border-2 border-surface-300" />
-            )}
-          </div>
-          <span className="text-sm font-medium text-surface-900">
-            {option.text}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {isWinner && (
-            <Badge variant="success" size="sm" className="hidden sm:flex">
-              <TrendingUp size={12} />
-              Leading
-            </Badge>
-          )}
-          <span
-            className={`text-sm font-bold ${isSelected ? 'text-brand-600' : 'text-surface-900'}`}
-          >
-            {percentage}%
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-3 h-2 bg-surface-100 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, delay: 0.3 + index * 0.1 }}
-          className={`
-            h-full rounded-full
-            ${isWinner ? 'bg-gradient-to-r from-brand-500 to-brand-600' : 'bg-surface-300'}
-          `}
-        />
-      </div>
-    </motion.button>
-  )
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
 }
 
 function PollStatusBadge({ status, expiresAt, startsAt }) {
@@ -184,6 +86,7 @@ function PollStatusBadge({ status, expiresAt, startsAt }) {
 
 export default function PollDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [selectedOptions, setSelectedOptions] = useState([])
   const [showComments, setShowComments] = useState(false)
 
@@ -273,7 +176,12 @@ export default function PollDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto space-y-4">
+      <motion.div
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        className="max-w-3xl mx-auto space-y-4"
+      >
         <Skeleton className="h-8 w-48" />
         <Card className="p-8">
           <div className="space-y-4">
@@ -286,26 +194,25 @@ export default function PollDetailPage() {
             </div>
           </div>
         </Card>
-      </div>
+      </motion.div>
     )
   }
 
   if (pollError || !poll) {
     return (
-      <div className="max-w-3xl mx-auto text-center py-20">
-        <div className="w-16 h-16 rounded-2xl bg-danger-50 flex items-center justify-center text-danger-500 mx-auto mb-4">
-          <Vote size={28} />
-        </div>
-        <h3 className="text-lg font-semibold text-surface-900 mb-1">
-          Poll not found
-        </h3>
-        <p className="text-sm text-surface-500 mb-4">
-          The poll you're looking for doesn't exist or has been removed.
-        </p>
-        <Link to="/dashboard">
-          <Button variant="primary">Back to Dashboard</Button>
-        </Link>
-      </div>
+      <motion.div
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        className="max-w-3xl mx-auto"
+      >
+        <EmptyState
+          type="notFound"
+          title="Poll not found"
+          description="The poll you're looking for doesn't exist or has been removed."
+          action={{ label: "Back to Dashboard", onClick: () => navigate("/dashboard") }}
+        />
+      </motion.div>
     )
   }
 
@@ -350,8 +257,13 @@ export default function PollDetailPage() {
   const statusMessage = getStatusMessage();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Back button */}
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="max-w-3xl mx-auto space-y-6"
+    >
       <Link to="/dashboard">
         <Button variant="ghost" size="sm">
           <ArrowLeft size={18} />
@@ -362,9 +274,9 @@ export default function PollDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
         <Card className="overflow-hidden">
-          {/* Header */}
           <div className="px-8 pt-8 pb-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -424,7 +336,6 @@ export default function PollDetailPage() {
               </div>
             </div>
 
-            {/* Category & Title */}
             <div className="mt-6">
               <Badge variant="secondary" size="sm" className="mb-3">
                 {poll.category || 'General'}
@@ -440,7 +351,6 @@ export default function PollDetailPage() {
             </div>
           </div>
 
-          {/* Poll options or results */}
           <div className="px-8 pb-6">
             {statusMessage ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -487,7 +397,6 @@ export default function PollDetailPage() {
             )}
           </div>
 
-          {/* Footer */}
           <div className="px-8 py-5 border-t border-surface-100 bg-surface-50/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -505,7 +414,7 @@ export default function PollDetailPage() {
                 </span>
                 <button
                   onClick={() => setShowComments(!showComments)}
-                  className="flex items-center gap-1.5 text-sm text-surface-500 hover:text-brand-600 transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-surface-500 hover:text-primary-600 transition-colors"
                 >
                   <MessageCircle size={16} />
                   <span className="font-medium">
@@ -597,11 +506,11 @@ export default function PollDetailPage() {
         </Card>
       </motion.div>
 
-      {/* Comments Section */}
       {showComments && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
           className="space-y-4"
         >
           <Card className="p-6">
@@ -663,6 +572,6 @@ export default function PollDetailPage() {
           </Card>
         </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

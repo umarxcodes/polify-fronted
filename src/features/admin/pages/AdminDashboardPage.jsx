@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 import {
   Users,
   FileText,
+  Flag,
   Vote,
   MessageSquare,
-  Flag,
   ArrowUpRight,
   ArrowDownRight,
   ExternalLink,
@@ -14,13 +14,14 @@ import {
   Settings,
   ScrollText,
   BarChart3,
-  Shield,
 } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -101,18 +102,6 @@ function RecentActivityItem({ activity, index = 0 }) {
   );
 }
 
-function EmptyState({ icon: Icon, title, description }) {
-  return (
-    <div className="p-12 text-center">
-      <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-        <Icon size={24} />
-      </div>
-      <h3 className="text-lg font-semibold text-surface-200 mb-1">{title}</h3>
-      <p className="text-sm text-surface-400">{description}</p>
-    </div>
-  );
-}
-
 export default function AdminDashboardPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "dashboard"],
@@ -128,14 +117,19 @@ export default function AdminDashboardPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <EmptyState
-          icon={Shield}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold text-white tracking-tight">Admin Dashboard</h1>
+          <p className="text-surface-400 mt-1">Platform overview and management</p>
+        </motion.div>
+        <ErrorState
+          error={error.message}
+          onRetry={refetch}
           title="Failed to load dashboard"
-          description={error.message}
+          dark
         />
-        <div className="text-center">
-          <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-        </div>
       </div>
     );
   }
@@ -264,7 +258,7 @@ export default function AdminDashboardPage() {
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-sm text-surface-400">{item.label}</span>
-                  <Badge variant={item.color} size="sm" dot dark>{item.status}</Badge>
+                  <Badge variant={item.color} size="sm" dot>{item.status}</Badge>
                 </div>
               ))}
             </div>
@@ -311,6 +305,7 @@ export default function AdminDashboardPage() {
                 icon={Activity}
                 title="No recent activity"
                 description="Admin actions will appear here."
+                dark
               />
             )}
           </Card>

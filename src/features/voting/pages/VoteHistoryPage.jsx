@@ -1,14 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Vote, Calendar, ExternalLink, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Vote, Calendar, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { votingService } from "../services/votingService";
 import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 
 export default function VoteHistoryPage() {
+  const navigate = useNavigate();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["votes", "history"],
     queryFn: () => votingService.getUserVoteHistory(),
@@ -16,29 +20,19 @@ export default function VoteHistoryPage() {
 
   const votes = data?.votes || [];
 
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Vote History</h1>
-          <p className="text-surface-400 mt-1">Your voting activity</p>
-        </div>
-        <Card dark className="p-12 text-center">
-          <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-          <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-4xl mx-auto space-y-6"
+    >
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Vote History</h1>
+        <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Vote History</h1>
         <p className="text-surface-400 mt-1">Your voting activity across all polls</p>
       </div>
 
-      {isLoading ? (
+      {isLoading && (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
             <Card key={i} dark className="p-5">
@@ -53,22 +47,29 @@ export default function VoteHistoryPage() {
             </Card>
           ))}
         </div>
-      ) : votes.length === 0 ? (
-        <Card dark className="p-12 text-center">
-          <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-            <Vote size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-surface-200 mb-1">No votes yet</h3>
-          <p className="text-sm text-surface-400 mb-4">
-            Start participating in polls to see your voting history here.
-          </p>
-          <Link to="/dashboard">
-            <Button variant="primary" icon={<ChevronRight size={16} />}>
-              Explore Polls
-            </Button>
-          </Link>
-        </Card>
-      ) : (
+      )}
+
+      {error && (
+        <ErrorState
+          error={error.message}
+          onRetry={() => refetch()}
+          title="Failed to load vote history"
+          dark
+        />
+      )}
+
+      {!isLoading && !error && votes.length === 0 && (
+        <EmptyState
+          type="empty"
+          title="No votes yet"
+          description="Start participating in polls to see your voting history here."
+          action={{ label: "Explore Polls", onClick: () => navigate("/dashboard") }}
+          icon={Vote}
+          dark
+        />
+      )}
+
+      {!isLoading && !error && votes.length > 0 && (
         <div className="space-y-3">
           {votes.map((vote, index) => (
             <motion.div
@@ -111,6 +112,6 @@ export default function VoteHistoryPage() {
           ))}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -9,7 +9,7 @@ const icons = {
   warning: AlertTriangle,
 };
 
-export const EmptyState = ({ type = 'empty', title, description, action, icon: CustomIcon }) => {
+export const EmptyState = ({ type = 'empty', title, description, action, icon: CustomIcon, dark }) => {
   const Icon = CustomIcon || icons[type] || Inbox;
 
   return (
@@ -20,19 +20,19 @@ export const EmptyState = ({ type = 'empty', title, description, action, icon: C
     >
       <div className={`
         w-16 h-16 rounded-2xl flex items-center justify-center mb-4
-        ${type === 'error' ? 'bg-danger-50 text-danger-500' :
-          type === 'warning' ? 'bg-warning-50 text-warning-500' :
-          'bg-surface-100 text-surface-400'}
+        ${type === 'error' ? 'bg-danger-500/15 text-danger-400' :
+          type === 'warning' ? 'bg-warning-500/15 text-warning-400' :
+          dark ? 'bg-surface-800 text-surface-500' : 'bg-surface-100 text-surface-400'}
       `}>
         <Icon size={28} />
       </div>
-      <h3 className="text-lg font-semibold text-surface-900 mb-1">
+      <h3 className={`text-lg font-semibold mb-1 ${dark ? 'text-white' : 'text-surface-900'}`}>
         {title || (type === 'empty' ? 'Nothing here yet' :
           type === 'notFound' ? 'No results found' :
           type === 'error' ? 'Something went wrong' :
           'Warning')}
       </h3>
-      <p className="text-sm text-surface-500 max-w-sm mb-6">
+      <p className={`text-sm max-w-sm mb-6 ${dark ? 'text-surface-400' : 'text-surface-500'}`}>
         {description || (type === 'empty' ? 'Get started by creating your first item.' :
           type === 'notFound' ? 'Try adjusting your search or filters to find what you\'re looking for.' :
           type === 'error' ? 'An error occurred while loading this content.' :

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MoreHorizontal,
@@ -13,17 +13,22 @@ import {
 } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Dropdown } from "../../../components/ui/Dropdown";
 import { Input } from "../../../components/ui/Input";
+import { Select } from "../../../components/ui/Select";
+import { Table } from "../../../components/ui/Table";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { Pagination } from "../../../components/ui/Pagination";
 import { toast } from "sonner";
 
 const unwrap = (response) => response.data?.data || response.data;
 
 export default function AdminPollsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -92,6 +97,71 @@ export default function AdminPollsPage() {
     }
   };
 
+  const columns = [
+    {
+      key: "title",
+      label: "Poll",
+      render: (title, poll) => (
+        <div className="min-w-0 max-w-[300px]">
+          <p className="text-sm font-medium text-white truncate">{poll.title || title}</p>
+          <p className="text-xs text-surface-500 truncate">{poll.category || "General"}</p>
+        </div>
+      ),
+    },
+    {
+      key: "author",
+      label: "Author",
+      render: (_, poll) => (
+        <span className="text-sm text-surface-300">
+          {poll.createdBy?.name || poll.createdBy?.username || "Unknown"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (status) => <Badge variant={getStatusVariant(status)} size="sm">{status}</Badge>,
+    },
+    {
+      key: "votes",
+      label: "Votes",
+      render: (_, poll) => <span className="text-sm text-surface-300">{poll.totalVotes?.toLocaleString() || 0}</span>,
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      align: "right",
+      render: (_, poll) => (
+        <Dropdown
+          align="right"
+          width={180}
+          dark
+          trigger={
+            <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
+              <MoreHorizontal size={16} />
+            </button>
+          }
+          items={[
+            {
+              label: "View Poll",
+              icon: Eye,
+              onClick: () => navigate(`/polls/${poll._id}`),
+            },
+            ...(poll.status !== "deleted"
+              ? [
+                  { label: "Close Poll", icon: XCircle, onClick: () => closeMutation.mutate(poll._id) },
+                  { label: "Feature Poll", icon: Star, onClick: () => featureMutation.mutate(poll._id) },
+                  { label: "Delete Poll", icon: Trash2, onClick: () => deleteMutation.mutate(poll._id), danger: true },
+                ]
+              : [
+                  { label: "Restore Poll", icon: RotateCcw, onClick: () => restoreMutation.mutate(poll._id) },
+                ]),
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -109,20 +179,21 @@ export default function AdminPollsPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               icon={<Search size={16} />}
+              dark
             />
           </div>
           <div className="w-full md:w-48">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full h-10 px-3 rounded-xl bg-surface-800 border border-surface-700 text-sm text-surface-100 outline-none focus:border-brand-500"
+              dark
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="expired">Expired</option>
               <option value="draft">Draft</option>
               <option value="deleted">Deleted</option>
-            </select>
+            </Select>
           </div>
         </div>
       </Card>
@@ -142,99 +213,29 @@ export default function AdminPollsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-          </div>
+          <ErrorState error={error.message} onRetry={refetch} dark />
         ) : polls.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-              <FileText size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-surface-200 mb-1">No polls found</h3>
-            <p className="text-sm text-surface-400">Try adjusting your search or filters.</p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No polls found"
+            description="Try adjusting your search or filters."
+            dark
+          />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-surface-800">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Poll</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Author</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Votes</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-800">
-                  {polls.map((poll, index) => (
-                    <motion.tr
-                      key={poll._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="hover:bg-surface-800/50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="min-w-0 max-w-[300px]">
-                          <p className="text-sm font-medium text-white truncate">{poll.title}</p>
-                          <p className="text-xs text-surface-500 truncate">{poll.category || "General"}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-surface-300">
-                        {poll.createdBy?.name || poll.createdBy?.username || "Unknown"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={getStatusVariant(poll.status)} size="sm">
-                          {poll.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-surface-300">
-                        {poll.totalVotes?.toLocaleString() || 0}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Dropdown
-                          align="right"
-                          width={180}
-                          trigger={
-                            <button className="p-2 rounded-lg text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors">
-                              <MoreHorizontal size={16} />
-                            </button>
-                          }
-                          items={[
-                            {
-                              label: "View Poll",
-                              icon: Eye,
-                              onClick: () => window.open(`/polls/${poll._id}`, "_blank"),
-                            },
-                            ...(poll.status !== "deleted"
-                              ? [
-                                  { label: "Close Poll", icon: XCircle, onClick: () => closeMutation.mutate(poll._id) },
-                                  { label: "Feature Poll", icon: Star, onClick: () => featureMutation.mutate(poll._id) },
-                                  { label: "Delete Poll", icon: Trash2, onClick: () => deleteMutation.mutate(poll._id), danger: true },
-                                ]
-                              : [
-                                  { label: "Restore Poll", icon: RotateCcw, onClick: () => restoreMutation.mutate(poll._id) },
-                                ]),
-                          ]}
-                        />
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
+            <Table
+              columns={columns}
+              data={polls}
+              dark
+            />
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-surface-800">
-                <p className="text-sm text-surface-400">
-                  Page {pagination.page || 1} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-                  <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
-                </div>
+              <div className="px-6 py-4 border-t border-surface-800">
+                <Pagination
+                  currentPage={pagination.page || 1}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  dark
+                />
               </div>
             )}
           </>

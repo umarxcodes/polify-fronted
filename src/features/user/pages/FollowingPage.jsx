@@ -16,8 +16,11 @@ export default function FollowingPage() {
     queryKey: ["user", "following", username],
     queryFn: async () => {
       const userRes = await apiClient.get(`/users/${username}`);
-      const userId = userRes.data?.data?.user?._id || userRes.data?.user?._id;
-      const { data } = await apiClient.get(`/follow/${userId}/following`);
+      const userId =
+        userRes.data?.data?.user?._id || userRes.data?.user?._id;
+      const { data } = await apiClient.get(
+        `/follow/${userId}/following`
+      );
       return data?.data || data;
     },
     enabled: !!username,
@@ -29,8 +32,14 @@ export default function FollowingPage() {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <Link to={`/profile/${username}`}><Button variant="ghost" size="sm" icon={<ArrowLeft size={18} />}>Back</Button></Link>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Following</h1>
+          <Link to={`/profile/${username}`}>
+            <Button variant="ghost" size="sm" icon={<ArrowLeft size={18} />}>
+              Back
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
+            Following
+          </h1>
         </div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -51,7 +60,12 @@ export default function FollowingPage() {
     return (
       <div className="max-w-3xl mx-auto text-center py-20">
         <p className="text-danger-500">{error.message}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Try again</Button>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-4"
+        >
+          Try again
+        </Button>
       </div>
     );
   }
@@ -59,10 +73,18 @@ export default function FollowingPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link to={`/profile/${username}`}><Button variant="ghost" size="sm" icon={<ArrowLeft size={18} />}>Back</Button></Link>
+        <Link to={`/profile/${username}`}>
+          <Button variant="ghost" size="sm" icon={<ArrowLeft size={18} />}>
+            Back
+          </Button>
+        </Link>
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Following</h1>
-          <p className="text-surface-400 mt-1">People @{username} follows</p>
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
+            Following
+          </h1>
+          <p className="text-surface-500 mt-1">
+            People @{username} follows
+          </p>
         </div>
       </div>
 
@@ -80,10 +102,18 @@ export default function FollowingPage() {
                   <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-surface-800 transition-colors">
                     <Avatar fallback={u.name?.[0] || "U"} size="md" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{u.name}</p>
-                      <p className="text-xs text-surface-500">@{u.username}</p>
+                      <p className="text-sm font-medium text-white truncate">
+                        {u.name}
+                      </p>
+                      <p className="text-xs text-surface-400">
+                        @{u.username}
+                      </p>
                     </div>
-                    {u.isVerified && <Badge variant="primary" size="sm" dot>Verified</Badge>}
+                    {u.isVerified && (
+                      <Badge variant="primary" size="sm" dot>
+                        Verified
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               </motion.div>
@@ -91,8 +121,10 @@ export default function FollowingPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Users className="mx-auto text-surface-500 mb-3" size={32} />
-            <p className="text-sm text-surface-400">Not following anyone yet</p>
+            <Users className="mx-auto text-surface-400 mb-3" size={32} />
+            <p className="text-sm text-surface-400">
+              Not following anyone yet
+            </p>
           </div>
         )}
       </Card>

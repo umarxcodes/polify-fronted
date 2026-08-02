@@ -7,6 +7,7 @@ import { Card } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Button } from "../../../components/ui/Button";
+import { EmptyState } from "../../../components/ui/EmptyState";
 import { toast } from "sonner";
 
 export default function SearchPage() {
@@ -80,14 +81,17 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-4xl mx-auto space-y-6"
+    >
       <div>
         <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Search</h1>
         <p className="text-surface-500 mt-2">Find polls, people, and topics.</p>
       </div>
 
-      {/* Search input */}
       <Card className="p-2">
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-3 px-4">
@@ -116,10 +120,8 @@ export default function SearchPage() {
         </div>
       </Card>
 
-      {/* Results or suggestions */}
       {!results && !loading && (
         <div className="space-y-6">
-          {/* Recent searches */}
           {recentSearches.length > 0 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -148,7 +150,6 @@ export default function SearchPage() {
             </Card>
           )}
 
-          {/* Trending */}
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-surface-900 flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-brand-500" />
@@ -173,7 +174,6 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* Loading state */}
       {loading && (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -189,10 +189,8 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* Results */}
       {results && !loading && (
         <div className="space-y-4">
-          {/* Tabs */}
           <div className="flex items-center gap-2">
             {["all", "polls", "users"].map((tab) => (
               <button
@@ -211,7 +209,6 @@ export default function SearchPage() {
             ))}
           </div>
 
-          {/* Polls */}
           {(activeTab === "all" || activeTab === "polls") && results.polls?.length > 0 && (
             <div className="space-y-4">
               {activeTab === "all" && (
@@ -247,7 +244,6 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Users */}
           {(activeTab === "all" || activeTab === "users") && results.users?.length > 0 && (
             <div className="space-y-4">
               {activeTab === "all" && (
@@ -281,20 +277,18 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* No results */}
           {((activeTab === "all" && !results.polls?.length && !results.users?.length) ||
             (activeTab === "polls" && !results.polls?.length) ||
             (activeTab === "users" && !results.users?.length)) && (
-            <Card className="p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center text-surface-400 mx-auto mb-4">
-                <Search size={28} />
-              </div>
-              <h3 className="text-lg font-semibold text-surface-900 mb-1">No results found</h3>
-              <p className="text-sm text-surface-500">Try adjusting your search query</p>
-            </Card>
+            <EmptyState
+              type="notFound"
+              title="No results found"
+              description="Try adjusting your search query"
+              icon={Search}
+            />
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

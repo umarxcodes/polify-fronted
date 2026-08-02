@@ -1,93 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { Calendar, Settings, Share2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
-import { Skeleton } from "../../../components/ui/Skeleton";
-
-function ProfileHeader({ user, stats }) {
-  const initials = (user?.name || "U")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2);
-
-  return (
-    <div className="relative bg-gradient-to-br from-brand-500/10 via-surface-50 to-violet-500/10 border-b border-surface-200/60">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-brand-500/5 via-transparent to-transparent" />
-      <div className="relative max-w-4xl mx-auto px-6 py-12">
-        <div className="flex items-end gap-6">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-brand-500/25 overflow-hidden">
-              {user?.profileImage ? (
-                <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            {user?.isVerified && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-brand-500 rounded-full border-4 border-surface-50 flex items-center justify-center">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-surface-900">{user?.name || "User"}</h1>
-            <p className="text-surface-500 mt-1">@{user?.username || "user"}</p>
-            {user?.bio && <p className="text-sm text-surface-600 mt-2 max-w-xl">{user.bio}</p>}
-            <div className="flex items-center gap-4 mt-3">
-              {user?.location && (
-                <span className="text-xs text-surface-500 flex items-center gap-1">
-                  <Calendar size={12} /> {user.location}
-                </span>
-              )}
-              {user?.website && (
-                <a href={user.website} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">
-                  {user.website}
-                </a>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/profile/settings">
-              <Button variant="ghost" size="sm" icon={<Settings size={16} />} />
-            </Link>
-            <Button variant="secondary" size="sm" icon={<Share2 size={16} />} />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6 mt-6 pt-6 border-t border-surface-200/60">
-          <div className="text-center">
-            <p className="text-lg font-bold text-surface-900">{stats?.totalPollsCreated || 0}</p>
-            <p className="text-xs text-surface-500">Polls</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-surface-900">{stats?.totalVotesCast || 0}</p>
-            <p className="text-xs text-surface-500">Votes</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-surface-900">{stats?.totalComments || 0}</p>
-            <p className="text-xs text-surface-500">Comments</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-surface-900">{stats?.followersCount || 0}</p>
-            <p className="text-xs text-surface-500">Followers</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-surface-900">{stats?.followingCount || 0}</p>
-            <p className="text-xs text-surface-500">Following</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { ProfileHeader } from "../components/ProfileHeader";
 
 export default function ProfilePage() {
-  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useQuery({
     queryKey: ["user", "profile"],
     queryFn: () => apiClient.get("/users/me").then((r) => r.data?.data || r.data),
   });
@@ -97,41 +19,29 @@ export default function ProfilePage() {
     queryFn: () => apiClient.get("/users/stats").then((r) => r.data?.data || r.data),
   });
 
-  if (profileLoading || statsLoading) {
-    return (
-      <div className="min-h-screen bg-surface-50">
-        <div className="relative bg-gradient-to-br from-brand-500/10 via-surface-50 to-violet-500/10 border-b border-surface-200/60">
-          <div className="max-w-4xl mx-auto px-6 py-12">
-            <div className="flex items-end gap-6">
-              <Skeleton className="w-24 h-24 rounded-2xl" />
-              <div className="flex-1 space-y-3">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (profileError || !profile) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-danger-600">{profileError?.message || "Failed to load profile"}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Try again</Button>
-      </div>
-    );
-  }
+  const isLoading = profileLoading || statsLoading;
 
   return (
     <div className="min-h-screen bg-surface-50">
-      <ProfileHeader user={profile} stats={stats?.stats} />
+      <ProfileHeader
+        user={profile}
+        stats={stats?.stats}
+        isOwnProfile
+        loading={isLoading}
+        error={profileError}
+        onRetry={() => window.location.reload()}
+      />
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-surface-900 mb-4">About</h3>
-            <p className="text-sm text-surface-600">{profile?.bio || "No bio yet."}</p>
+            <p className="text-sm text-surface-600">
+              {profile?.bio || "No bio yet."}
+            </p>
             <div className="mt-4 space-y-2">
               {profile?.location && (
                 <p className="text-sm text-surface-500">
@@ -140,33 +50,20 @@ export default function ProfilePage() {
               )}
               {profile?.website && (
                 <p className="text-sm text-surface-500">
-                  <span className="font-medium">Website:</span> {profile.website}
+                  <span className="font-medium">Website:</span>{" "}
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand-600 hover:underline"
+                  >
+                    {profile.website}
+                  </a>
                 </p>
               )}
             </div>
           </Card>
-          <Card className="p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-surface-900 mb-4">Stats</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-surface-900">{stats?.stats?.totalPollsCreated || 0}</p>
-                <p className="text-sm text-surface-500">Polls</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-surface-900">{stats?.stats?.totalVotesCast || 0}</p>
-                <p className="text-sm text-surface-500">Votes</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-surface-900">{stats?.stats?.followersCount || 0}</p>
-                <p className="text-sm text-surface-500">Followers</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-surface-900">{stats?.stats?.followingCount || 0}</p>
-                <p className="text-sm text-surface-500">Following</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+        </motion.div>
       </main>
     </div>
   );

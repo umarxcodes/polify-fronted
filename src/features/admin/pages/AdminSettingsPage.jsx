@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { Settings, Save, Globe, Bell } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
+import { Switch } from "../../../components/ui/Switch";
 import { toast } from "sonner";
 
 const unwrap = (response) => response.data?.data || response.data;
@@ -41,7 +43,11 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
       <div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
         <p className="text-surface-400 mt-1">Manage platform configuration</p>
@@ -75,7 +81,7 @@ export default function AdminSettingsPage() {
                   value={settings.siteDescription}
                   onChange={(e) => handleChange("siteDescription", e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl bg-surface-800 border border-surface-700 text-sm text-white placeholder:text-surface-500 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-800 border border-surface-700 text-sm text-white placeholder:text-surface-500 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all resize-none"
                 />
               </div>
             </div>
@@ -135,33 +141,27 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <div className="space-y-4">
-                <label className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-300">Allow Registration</span>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={settings.allowRegistration}
                     onChange={(e) => handleChange("allowRegistration", e.target.checked)}
-                    className="w-5 h-5 rounded-lg bg-surface-800 border-surface-700 text-brand-500 focus:ring-brand-500/20"
                   />
-                </label>
-                <label className="flex items-center justify-between cursor-pointer">
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-300">Require Email Verification</span>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={settings.requireEmailVerification}
                     onChange={(e) => handleChange("requireEmailVerification", e.target.checked)}
-                    className="w-5 h-5 rounded-lg bg-surface-800 border-surface-700 text-brand-500 focus:ring-brand-500/20"
                   />
-                </label>
-                <label className="flex items-center justify-between cursor-pointer">
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-300">Maintenance Mode</span>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={settings.maintenanceMode}
                     onChange={(e) => handleChange("maintenanceMode", e.target.checked)}
-                    className="w-5 h-5 rounded-lg bg-surface-800 border-surface-700 text-brand-500 focus:ring-brand-500/20"
                   />
-                </label>
+                </div>
               </div>
             </Card>
           </div>
@@ -183,6 +183,6 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
       </form>
-    </div>
+    </motion.div>
   );
 }

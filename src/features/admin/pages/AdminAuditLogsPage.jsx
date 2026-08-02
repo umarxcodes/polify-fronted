@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import {
   Search,
   Download,
@@ -17,6 +16,11 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Input } from "../../../components/ui/Input";
+import { Select } from "../../../components/ui/Select";
+import { Table } from "../../../components/ui/Table";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { Pagination } from "../../../components/ui/Pagination";
 import { toast } from "sonner";
 
 const unwrap = (response) => response.data?.data || response.data;
@@ -71,7 +75,7 @@ export default function AdminAuditLogsPage() {
       const params = new URLSearchParams();
       if (search) params.set("action", search);
       if (actionFilter) params.set("targetType", actionFilter);
-      
+
       const response = await apiClient.get(`/admin/audit-logs/export?${params.toString()}`);
       const blob = new Blob([response.data], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
@@ -97,6 +101,55 @@ export default function AdminAuditLogsPage() {
     return <Icon size={14} />;
   };
 
+  const columns = [
+    {
+      key: "action",
+      label: "Action",
+      render: (action, log) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center text-brand-400 flex-shrink-0">
+            {getTargetTypeIcon(log.targetType)}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">{actionLabels[log.action] || log.action}</p>
+            {log.details && (
+              <p className="text-xs text-surface-500 truncate max-w-[300px]">
+                {JSON.stringify(log.details)}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "targetType",
+      label: "Type",
+      render: (type) => <Badge variant="secondary" size="sm">{type}</Badge>,
+    },
+    {
+      key: "admin",
+      label: "Admin",
+      render: (_, log) => (
+        <div className="flex items-center gap-2">
+          <Avatar
+            src={log.adminId?.profileImage}
+            fallback={log.adminId?.name?.split(" ").map(n => n[0]).join("") || "A"}
+            size="sm"
+            color="brand"
+          />
+          <span className="text-sm text-surface-300 truncate max-w-[150px]">
+            {log.adminId?.name || log.adminId?.username || "Unknown"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Time",
+      render: (value) => <span className="text-sm text-surface-400 whitespace-nowrap">{new Date(value).toLocaleString()}</span>,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -117,13 +170,14 @@ export default function AdminAuditLogsPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               icon={<Search size={16} />}
+              dark
             />
           </div>
           <div className="w-full md:w-48">
-            <select
+            <Select
               value={actionFilter}
               onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-              className="w-full h-10 px-3 rounded-xl bg-surface-800 border border-surface-700 text-sm text-surface-100 outline-none focus:border-brand-500"
+              dark
             >
               <option value="">All Types</option>
               <option value="user">Users</option>
@@ -132,7 +186,7 @@ export default function AdminAuditLogsPage() {
               <option value="category">Categories</option>
               <option value="notification">Notifications</option>
               <option value="system">System</option>
-            </select>
+            </Select>
           </div>
         </div>
       </Card>
@@ -151,90 +205,29 @@ export default function AdminAuditLogsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-          </div>
+          <ErrorState error={error.message} onRetry={refetch} dark />
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-              <ScrollText size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-surface-200 mb-1">No audit logs found</h3>
-            <p className="text-sm text-surface-400">Admin actions will appear here.</p>
-          </div>
+          <EmptyState
+            icon={ScrollText}
+            title="No audit logs found"
+            description="Admin actions will appear here."
+            dark
+          />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-surface-800">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Action</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Type</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Admin</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-800">
-                  {logs.map((log, index) => (
-                    <motion.tr
-                      key={log._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="hover:bg-surface-800/50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center text-brand-400 flex-shrink-0">
-                            {getTargetTypeIcon(log.targetType)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-white">{actionLabels[log.action] || log.action}</p>
-                            {log.details && (
-                              <p className="text-xs text-surface-500 truncate max-w-[300px]">
-                                {JSON.stringify(log.details)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="secondary" size="sm">
-                          {log.targetType}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Avatar
-                            src={log.adminId?.profileImage}
-                            fallback={log.adminId?.name?.split(" ").map(n => n[0]).join("") || "A"}
-                            size="sm"
-                            color="brand"
-                          />
-                          <span className="text-sm text-surface-300 truncate max-w-[150px]">
-                            {log.adminId?.name || log.adminId?.username || "Unknown"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-surface-400 whitespace-nowrap">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
+            <Table
+              columns={columns}
+              data={logs}
+              dark
+            />
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-surface-800">
-                <p className="text-sm text-surface-400">
-                  Page {pagination.page || 1} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-                  <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
-                </div>
+              <div className="px-6 py-4 border-t border-surface-800">
+                <Pagination
+                  currentPage={pagination.page || 1}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  dark
+                />
               </div>
             )}
           </>

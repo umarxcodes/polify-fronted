@@ -16,6 +16,8 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Input } from "../../../components/ui/Input";
 import { Dialog } from "../../../components/ui/Dialog";
+import { EmptyState } from "../../../components/ui/EmptyState";
+import { ErrorState } from "../../../components/ui/ErrorState";
 import { toast } from "sonner";
 
 export default function OrganizationsPage() {
@@ -80,10 +82,15 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Organizations</h1>
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Organizations</h1>
           <p className="text-surface-400 mt-1">Manage your teams and organizations</p>
         </div>
         <Button onClick={openCreateDialog} icon={<Plus size={16} />}>
@@ -117,18 +124,20 @@ export default function OrganizationsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-          </div>
+          <ErrorState
+            error={error.message}
+            onRetry={() => refetch()}
+            title="Failed to load organizations"
+            dark
+          />
         ) : organizations.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-surface-800 flex items-center justify-center text-surface-500 mx-auto mb-3">
-              <Building2 size={24} />
-            </div>
-            <h3 className="text-lg font-semibold text-surface-200 mb-1">No organizations found</h3>
-            <p className="text-sm text-surface-400">Create your first organization to get started.</p>
-          </div>
+          <EmptyState
+            type="empty"
+            title="No organizations found"
+            description="Create your first organization to get started."
+            icon={Building2}
+            dark
+          />
         ) : (
           <div className="divide-y divide-surface-800">
             {organizations.map((org, index) => (
@@ -213,6 +222,6 @@ export default function OrganizationsPage() {
           </div>
         </form>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

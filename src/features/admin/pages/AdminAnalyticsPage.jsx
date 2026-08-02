@@ -9,10 +9,11 @@ import {
 } from "lucide-react";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
-import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { EmptyState } from "../../../components/ui/EmptyState";
 
 const unwrap = (response) => response.data?.data || response.data;
 
@@ -27,16 +28,22 @@ export default function AdminAnalyticsPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Analytics</h1>
           <p className="text-surface-400 mt-1">Platform insights</p>
         </div>
-        <Card dark className="p-12 text-center">
-          <p className="text-sm text-surface-400 mb-4">{error.message}</p>
-          <Button onClick={() => refetch()} variant="secondary">Try again</Button>
-        </Card>
-      </div>
+        <ErrorState
+          error={error.message}
+          onRetry={refetch}
+          title="Failed to load analytics"
+          dark
+        />
+      </motion.div>
     );
   }
 
@@ -46,7 +53,11 @@ export default function AdminAnalyticsPage() {
   const mostPopularPolls = analytics.mostPopularPolls || [];
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
       <div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Analytics</h1>
         <p className="text-surface-400 mt-1">Platform insights and trends</p>
@@ -159,7 +170,12 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-surface-400">No data available</p>
+            <EmptyState
+              icon={Users}
+              title="No data available"
+              description="Analytics data will appear here once available."
+              dark
+            />
           )}
         </Card>
 
@@ -201,7 +217,12 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-surface-400">No data available</p>
+            <EmptyState
+              icon={FileText}
+              title="No data available"
+              description="Analytics data will appear here once available."
+              dark
+            />
           )}
         </Card>
       </div>
@@ -242,9 +263,14 @@ export default function AdminAnalyticsPage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-surface-400">No data available</p>
+          <EmptyState
+            icon={TrendingUp}
+            title="No data available"
+            description="Category analytics will appear here once available."
+            dark
+          />
         )}
       </Card>
-    </div>
+    </motion.div>
   );
 }

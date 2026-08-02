@@ -1,12 +1,10 @@
-
-
-export const Switch = ({ checked, onChange, label, className = '', ...props }) => (
-  <label className={`inline-flex items-center gap-2 text-sm text-surface-700 ${className}`}>
+export const Switch = ({ checked, onChange, label, className = '', dark, ...props }) => (
+  <label className={`inline-flex items-center gap-2 text-sm ${dark ? 'text-surface-300' : 'text-surface-700'} ${className}`}>
     <button
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange?.(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${checked ? 'bg-brand-500' : 'bg-surface-300'}`}
+      onClick={() => onChange?.({ target: { checked: !checked } })}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${checked ? 'bg-brand-500' : (dark ? 'bg-surface-600' : 'bg-surface-300')}`}
       {...props}
     >
       <span
