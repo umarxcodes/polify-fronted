@@ -12,7 +12,7 @@ export default function BookmarksPage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
 
-  const { bookmarks, isLoading, error, refetch, removeBookmark } = useBookmarks({
+  const { bookmarks, isLoading, error, refetch, removeBookmark, isRemoving } = useBookmarks({
     search,
     sort,
     page: 1,
@@ -89,7 +89,7 @@ export default function BookmarksPage() {
               key={bookmark._id || index}
               bookmark={bookmark}
               index={index}
-              onRemove={{ remove: handleRemove, isRemoving: false }}
+              onRemove={{ remove: handleRemove, isRemoving }}
             />
           ))}
         </div>
