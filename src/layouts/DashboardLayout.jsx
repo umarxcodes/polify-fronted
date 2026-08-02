@@ -8,16 +8,17 @@ import {
   Bell,
   Bookmark,
   Settings,
-  HelpCircle,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
   User,
   Moon,
   Sun,
   Menu,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  FileText,
+  Vote,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useQuery } from '@tanstack/react-query'
@@ -30,16 +31,18 @@ import { toast } from 'sonner'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
-  { icon: Search, label: 'Explore', href: '/search' },
-  { icon: Plus, label: 'Create poll', href: '/polls/create' },
-  { icon: BarChart3, label: 'Analytics', href: '/analytics' },
+  { icon: Plus, label: 'Create Poll', href: '/polls/create' },
+  { icon: FileText, label: 'My Polls', href: '/polls' },
+  { icon: Vote, label: 'Voted Polls', href: '/votes/history' },
   { icon: Bookmark, label: 'Bookmarks', href: '/bookmarks' },
+  { icon: BarChart3, label: 'Analytics', href: '/analytics' },
   { icon: Bell, label: 'Notifications', href: '/notifications' },
+  { icon: Search, label: 'Explore', href: '/search' },
 ]
 
 const bottomNavItems = [
+  { icon: User, label: 'Profile', href: '/profile' },
   { icon: Settings, label: 'Settings', href: '/profile/settings' },
-  { icon: HelpCircle, label: 'Help', href: '/dashboard' },
 ]
 
 function SidebarContent({ collapsed, onNavigate, user }) {

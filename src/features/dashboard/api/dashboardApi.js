@@ -36,3 +36,20 @@ export const getCurrentUser = async () => {
   const { data } = await apiClient.get("/users/me");
   return data?.data?.user || data?.user || data?.data || data;
 };
+
+export const getUserStats = async () => {
+  const { data } = await apiClient.get("/users/stats");
+  return data?.data?.stats || data?.stats || data?.data || data;
+};
+
+export const getCategories = async () => {
+  const { data } = await apiClient.get("/search/categories");
+  return data?.data || data;
+};
+
+export const getSearchSuggestions = async (query) => {
+  const { data } = await apiClient.get("/search/suggestions", {
+    params: { q: query },
+  });
+  return data?.data || data || [];
+};

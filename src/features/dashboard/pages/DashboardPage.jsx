@@ -1,9 +1,8 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
   Vote,
-  Users,
   FileText,
   Activity,
   ArrowUpRight,
@@ -19,6 +18,14 @@ import {
   Bookmark,
   ExternalLink,
   RefreshCw,
+  UserPlus,
+  Tag,
+  Calendar,
+  Trophy,
+  Zap,
+  Target,
+  MessageCircle,
+  Heart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "../../../components/ui/Card";
@@ -26,6 +33,7 @@ import { Button } from "../../../components/ui/Button";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { Badge } from "../../../components/ui/Badge";
 import { Avatar } from "../../../components/ui/Avatar";
+import { SearchInput } from "../../../components/ui/SearchInput";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
   getDashboardStats,
@@ -35,7 +43,11 @@ import {
   getNotifications,
   getUnreadCount,
   getCurrentUser,
+  getUserStats,
+  getCategories,
+  getSearchSuggestions,
 } from "../api/dashboardApi";
+import { useDebounce } from "../hooks/useDebounce";
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 const formatDate = (value) => {
@@ -170,8 +182,279 @@ function ErrorState({ message, onRetry }) {
   );
 }
 
+function ProfileSummaryCard({ profile, stats, statsLoading }) {
+  const memberSince = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString(undefined, {
+        month: "short",
+        year: "numeric",
+      })
+    : "Recently";
+
+  return (
+    <Card dark className="p-6">
+      <div className="flex items-center gap-4">
+        <Avatar
+          src={profile.profileImage}
+          fallback={(profile.name || "U").split(" ").map((n) => n[0]).join("")}
+          size="lg"
+          color="brand"
+        />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-semibold text-white truncate">
+            {profile.name || "User"}
+          </h3>
+          <p className="text-sm text-surface-400 truncate">
+            @{profile.username || "user"}
+          </p>
+          {profile.bio && (
+            <p className="text-xs text-surface-500 mt-1 line-clamp-2">
+              {profile.bio}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-surface-800">
+        <div className="text-center">
+          <p className="text-lg font-bold text-white">
+            {statsLoading ? "..." : formatNumber(stats.totalPollsCreated || 0)}
+          </p>
+          <p className="text-xs text-surface-400">Polls</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-bold text-white">
+            {statsLoading ? "..." : formatNumber(stats.followersCount || 0)}
+          </p>
+          <p className="text-xs text-surface-400">Followers</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-bold text-white">
+            {statsLoading ? "..." : formatNumber(stats.followingCount || 0)}
+          </p>
+          <p className="text-xs text-surface-400">Following</p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-surface-400">Profile completion</span>
+          <span className="text-surface-300 font-medium">
+            {stats.profileCompletionPercentage ?? 0}%
+          </span>
+        </div>
+        <div className="h-2 bg-surface-800 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${stats.profileCompletionPercentage ?? 0}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full"
+          />
+        </div>
+        <div className="flex items-center gap-1 text-xs text-surface-500">
+          <Calendar size={12} />
+          Member since {memberSince}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <Link to="/profile">
+          <Button variant="secondary" size="sm" className="w-full">
+            View Profile
+          </Button>
+        </Link>
+      </div>
+    </Card>
+  );
+}
+
+function UserStatisticsCard({ stats, statsLoading }) {
+  const items = [
+    { label: "Total Polls", value: stats.totalPollsCreated, icon: FileText },
+    { label: "Votes Cast", value: stats.totalVotesCast, icon: Vote },
+    { label: "Comments", value: stats.totalComments, icon: MessageCircle },
+    { label: "Bookmarks", value: stats.totalSavedPolls, icon: Bookmark },
+    { label: "Likes Received", value: stats.totalLikesReceived, icon: Heart },
+    { label: "Followers", value: stats.followersCount, icon: UserPlus },
+  ];
+
+  return (
+    <Card dark className="p-6">
+      <h3 className="text-base font-semibold text-white mb-4">Your Statistics</h3>
+      {statsLoading ? (
+        <div className="space-y-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <Skeleton dark className="h-4 w-24" />
+              <Skeleton dark className="h-4 w-12" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item, index) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
+                  <item.icon size={14} />
+                </div>
+                <span className="text-sm text-surface-300">{item.label}</span>
+              </div>
+              <span className="text-sm font-semibold text-white">
+                {formatNumber(item.value || 0)}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function CategoriesWidget({ categories, loading }) {
+  return (
+    <Card dark className="p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Tag size={16} className="text-brand-400" />
+        <h3 className="text-base font-semibold text-white">Categories</h3>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton dark key={i} className="h-8 w-full rounded-lg" />
+          ))}
+        </div>
+      ) : categories && categories.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {categories.slice(0, 8).map((category, index) => (
+            <motion.div
+              key={category._id || category.name || index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.03 }}
+            >
+              <Link to={`/search?category=${encodeURIComponent(category.name || category)}`}>
+                <Badge variant="secondary" size="sm" dark className="cursor-pointer hover:bg-surface-700 transition-colors">
+                  {category.name || category}
+                </Badge>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-surface-500">No categories found</p>
+      )}
+    </Card>
+  );
+}
+
+function QuickStatsCard({ stats, statsLoading }) {
+  const items = [
+    { label: "Total Votes", value: stats.totalVotesCast, icon: Vote, color: "text-success-400" },
+    { label: "Saved Polls", value: stats.totalSavedPolls, icon: Bookmark, color: "text-brand-400" },
+    { label: "Comments", value: stats.totalComments, icon: MessageCircle, color: "text-warning-400" },
+  ];
+
+  return (
+    <Card dark className="p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Zap size={16} className="text-warning-400" />
+        <h3 className="text-base font-semibold text-white">Quick Stats</h3>
+      </div>
+      {statsLoading ? (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <Skeleton dark className="h-4 w-24" />
+              <Skeleton dark className="h-4 w-12" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item, index) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <item.icon size={14} className={item.color} />
+                <span className="text-sm text-surface-300">{item.label}</span>
+              </div>
+              <span className="text-sm font-semibold text-white">
+                {formatNumber(item.value || 0)}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RecentActivityCard({ polls }) {
+  const activities = polls.slice(0, 5).map((poll, index) => ({
+    id: poll._id || index,
+    type: "poll_created",
+    title: poll.title || "Untitled poll",
+    time: poll.createdAt,
+    icon: FileText,
+  }));
+
+  return (
+    <Card dark className="p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Activity size={16} className="text-success-400" />
+        <h3 className="text-base font-semibold text-white">Recent Activity</h3>
+      </div>
+      {activities.length > 0 ? (
+        <div className="space-y-3">
+          {activities.map((activity, index) => (
+            <motion.div
+              key={activity.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex items-start gap-3"
+            >
+              <div className="w-8 h-8 rounded-lg bg-surface-800 flex items-center justify-center text-surface-400 flex-shrink-0">
+                <activity.icon size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-surface-200 line-clamp-2">
+                  {activity.title}
+                </p>
+                <p className="text-xs text-surface-500 mt-0.5">
+                  {formatDate(activity.time)}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Activity}
+          title="No activity yet"
+          description="Your recent activity will appear here."
+        />
+      )}
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const {
     data: statsData,
@@ -181,6 +464,16 @@ export default function DashboardPage() {
   } = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: getDashboardStats,
+  });
+
+  const {
+    data: userStats,
+    isLoading: userStatsLoading,
+    refetch: refetchUserStats,
+  } = useQuery({
+    queryKey: ["dashboard", "userStats"],
+    queryFn: getUserStats,
+    enabled: !!user,
   });
 
   const {
@@ -241,13 +534,23 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
+  const {
+    data: categoriesData,
+    refetch: refetchCategories,
+  } = useQuery({
+    queryKey: ["dashboard", "categories"],
+    queryFn: getCategories,
+  });
+
   const stats = statsData || {};
+  const userStatsData = userStats || {};
   const latestPolls = latestData?.polls || latestData || [];
   const trendingPolls = trendingData?.polls || trendingData || [];
   const recommendedPolls = recommendedData?.polls || recommendedData || [];
   const notifications = notificationsData?.notifications || notificationsData || [];
   const unreadCount = typeof unreadData === "number" ? unreadData : unreadData?.count || 0;
   const profile = userData?.user || userData || user || {};
+  const categories = categoriesData?.categories || categoriesData || [];
 
   const quickActions = [
     { icon: Plus, label: "Create Poll", href: "/polls/create", variant: "primary" },
@@ -262,15 +565,30 @@ export default function DashboardPage() {
 
   const handleRetryAll = () => {
     refetchStats();
+    refetchUserStats();
     refetchLatest();
     refetchTrending();
     refetchRecommended();
     refetchNotifications();
     refetchUnread();
     refetchUser();
+    refetchCategories();
   };
 
   const hasAnyError = statsError || latestError || trendingError;
+
+  useEffect(() => {
+    if (debouncedSearch.length >= 2) {
+      getSearchSuggestions(debouncedSearch).then((data) => {
+        setSearchSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
+      });
+    }
+  }, [debouncedSearch]);
+
+  const handleSearchSelect = (suggestion) => {
+    setSearchQuery(suggestion);
+    window.location.href = `/search?q=${encodeURIComponent(suggestion)}`;
+  };
 
   if (hasAnyError) {
     return (
@@ -322,6 +640,22 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      {/* Global Search */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search polls, users, categories..."
+          suggestions={searchSuggestions}
+          onSelectSuggestion={handleSearchSelect}
+          className="max-w-2xl"
+        />
+      </motion.div>
+
       {/* Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsLoading ? (
@@ -355,7 +689,7 @@ export default function DashboardPage() {
               delay={0.05}
             />
             <StatCard
-              icon={Users}
+              icon={Trophy}
               label="Most Popular"
               value={
                 stats.mostPopularPoll?.title
@@ -373,13 +707,13 @@ export default function DashboardPage() {
               compact
             />
             <StatCard
-              icon={TrendingUp}
-              label="Engagement"
+              icon={Target}
+              label="Completion"
               value={stats.completionRate ? `${stats.completionRate}%` : "0%"}
               change={
                 stats.leastPopularPoll?.title
-                  ? `Best: ${stats.leastPopularPoll.title.length > 15 ? stats.leastPopularPoll.title.slice(0, 15) + "..." : stats.leastPopularPoll.title}`
-                  : "No data"
+                  ? `Focus: ${stats.leastPopularPoll.title.length > 15 ? stats.leastPopularPoll.title.slice(0, 15) + "..." : stats.leastPopularPoll.title}`
+                  : "Keep creating"
               }
               delay={0.15}
             />
@@ -475,61 +809,22 @@ export default function DashboardPage() {
               )}
             </Card>
           )}
+
+          {/* Recent Activity */}
+          <RecentActivityCard polls={latestPolls} />
         </div>
 
-        {/* Right column - Trending, Notifications, Profile */}
+        {/* Right column */}
         <div className="space-y-6">
           {/* Profile summary */}
-          <Card dark className="p-6">
-            <div className="flex items-center gap-4">
-              <Avatar
-                src={profile.profileImage}
-                fallback={(profile.name || "U").split(" ").map((n) => n[0]).join("")}
-                size="lg"
-                color="brand"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-white truncate">
-                  {profile.name || "User"}
-                </h3>
-                <p className="text-sm text-surface-400 truncate">
-                  @{profile.username || "user"}
-                </p>
-                {profile.bio && (
-                  <p className="text-xs text-surface-500 mt-1 line-clamp-2">
-                    {profile.bio}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-surface-800">
-              <div className="text-center">
-                <p className="text-lg font-bold text-white">
-                  {formatNumber(stats.totalPolls)}
-                </p>
-                <p className="text-xs text-surface-400">Polls</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-white">
-                  {formatNumber(stats.totalVotes)}
-                </p>
-                <p className="text-xs text-surface-400">Votes</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-white">
-                  {formatNumber(stats.totalBookmarks || 0)}
-                </p>
-                <p className="text-xs text-surface-400">Bookmarks</p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Link to="/profile">
-                <Button variant="secondary" size="sm" className="w-full">
-                  View Profile
-                </Button>
-              </Link>
-            </div>
-          </Card>
+          <ProfileSummaryCard
+            profile={profile}
+            stats={userStatsData}
+            statsLoading={userStatsLoading}
+          />
+
+          {/* User Statistics */}
+          <UserStatisticsCard stats={userStatsData} statsLoading={userStatsLoading} />
 
           {/* Trending topics */}
           <Card dark className="p-6">
@@ -595,6 +890,12 @@ export default function DashboardPage() {
               />
             )}
           </Card>
+
+          {/* Categories */}
+          <CategoriesWidget categories={categories} loading={false} />
+
+          {/* Quick Stats */}
+          <QuickStatsCard stats={userStatsData} statsLoading={userStatsLoading} />
 
           {/* Notifications preview */}
           <Card dark className="p-6">

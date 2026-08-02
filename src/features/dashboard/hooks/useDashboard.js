@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../../lib/axios";
+import { getUserStats, getCategories } from "../api/dashboardApi";
 
 export function useDashboard() {
   return useQuery({
@@ -96,5 +97,21 @@ export function useAdminDashboard() {
       const response = await apiClient.get("/admin/dashboard");
       return response.data?.data || response.data;
     },
+  });
+}
+
+export function useUserStats() {
+  return useQuery({
+    queryKey: ["dashboard", "userStats"],
+    queryFn: getUserStats,
+    staleTime: 60_000,
+  });
+}
+
+export function useCategories() {
+  return useQuery({
+    queryKey: ["dashboard", "categories"],
+    queryFn: getCategories,
+    staleTime: 5 * 60_000,
   });
 }
