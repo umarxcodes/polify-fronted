@@ -17,6 +17,7 @@ import {
   Moon,
   LogOut,
   User,
+  Flag,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../lib/axios'
@@ -31,6 +32,8 @@ const navItems = [
   { icon: Users, label: 'Users', href: '/admin/users' },
   { icon: FileText, label: 'Polls', href: '/admin/polls' },
   { icon: MessageSquare, label: 'Comments', href: '/admin/comments' },
+  { icon: Flag, label: 'Reports', href: '/admin/reports' },
+  { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
   { icon: FolderOpen, label: 'Categories', href: '/admin/categories' },
   { icon: ScrollText, label: 'Audit Logs', href: '/admin/audit-logs' },
   { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },

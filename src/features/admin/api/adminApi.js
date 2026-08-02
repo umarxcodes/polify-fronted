@@ -75,6 +75,46 @@ export const restoreComment = async (id) => {
   return data;
 };
 
+export const getReports = async (params = {}) => {
+  const { data } = await apiClient.get("/admin/reports", { params });
+  return data;
+};
+
+export const getReport = async (id) => {
+  const { data } = await apiClient.get(`/admin/reports/${id}`);
+  return data;
+};
+
+export const reviewReport = async (id, adminNotes = "") => {
+  const { data } = await apiClient.patch(`/admin/reports/${id}/review`, { adminNotes });
+  return data;
+};
+
+export const resolveReport = async (id, adminNotes = "") => {
+  const { data } = await apiClient.patch(`/admin/reports/${id}/resolve`, { adminNotes });
+  return data;
+};
+
+export const rejectReport = async (id, adminNotes = "") => {
+  const { data } = await apiClient.patch(`/admin/reports/${id}/reject`, { adminNotes });
+  return data;
+};
+
+export const getNotifications = async (params = {}) => {
+  const { data } = await apiClient.get("/admin/notifications", { params });
+  return data;
+};
+
+export const createNotification = async (payload) => {
+  const { data } = await apiClient.post("/admin/notifications", payload);
+  return data;
+};
+
+export const broadcastNotification = async (payload) => {
+  const { data } = await apiClient.post("/admin/notifications/broadcast", payload);
+  return data;
+};
+
 export const getCategories = async () => {
   const { data } = await apiClient.get("/admin/categories");
   return data;
