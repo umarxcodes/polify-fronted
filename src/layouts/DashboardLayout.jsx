@@ -227,7 +227,7 @@ export default function DashboardLayout() {
       <aside
         className={`
           hidden lg:flex flex-col bg-surface-900 border-r border-surface-800
-          transition-all duration-300 ease-out
+          transition-all duration-300 ease-out relative
           ${collapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
       >

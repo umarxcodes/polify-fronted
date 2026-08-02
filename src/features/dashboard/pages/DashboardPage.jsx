@@ -579,9 +579,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (debouncedSearch.length >= 2) {
-      getSearchSuggestions(debouncedSearch).then((data) => {
-        setSearchSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
-      });
+      getSearchSuggestions(debouncedSearch)
+        .then((data) => {
+          setSearchSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
+        })
+        .catch(() => {
+          setSearchSuggestions([]);
+        });
     }
   }, [debouncedSearch]);
 
