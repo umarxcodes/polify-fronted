@@ -160,7 +160,8 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { user, signOut } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const themeContext = useTheme()
+  const { theme = 'system', toggleTheme = () => {} } = themeContext || {}
   const location = useLocation()
   const navigate = useNavigate()
 

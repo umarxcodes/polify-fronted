@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { Toaster } from "sonner";
 import { Skeleton } from "./components/ui/Skeleton";
 import AuthLayout from "./layouts/AuthLayout";
@@ -299,23 +300,25 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <RootLayout>
-          <Suspense fallback={<LoadingFallback />}>
-            <AppRoutes />
-          </Suspense>
-        </RootLayout>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            classNames: {
-              error: "bg-danger-500 text-white",
-              success: "bg-success-500 text-white",
-              warning: "bg-warning-500 text-white",
-              info: "bg-brand-500 text-white",
-            },
-            duration: 4000,
-          }}
-        />
+        <ThemeProvider>
+          <RootLayout>
+            <Suspense fallback={<LoadingFallback />}>
+              <AppRoutes />
+            </Suspense>
+          </RootLayout>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              classNames: {
+                error: "bg-danger-500 text-white",
+                success: "bg-success-500 text-white",
+                warning: "bg-warning-500 text-white",
+                info: "bg-brand-500 text-white",
+              },
+              duration: 4000,
+            }}
+          />
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );
