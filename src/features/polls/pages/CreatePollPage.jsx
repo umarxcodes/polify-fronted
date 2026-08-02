@@ -120,10 +120,6 @@ export default function CreatePollPage() {
         toast.error("Failed to create poll", {
           description: backendMessage,
         });
-
-        if (error?.response?.data?.errors) {
-          console.error("Create poll validation errors:", error.response.data.errors);
-        }
       },
     });
   };

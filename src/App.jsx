@@ -10,6 +10,8 @@ import AdminLayout from "./layouts/AdminLayout";
 import RootLayout from "./layouts/RootLayout";
 import { ProtectedRoute, PublicRoute } from "./routes/ProtectedRoute";
 import { ROLES } from "./constants/routes";
+import ErrorBoundary from "./components/feedback/ErrorBoundary";
+import { NotFoundPage } from "./features/errors/pages/NotFoundPage";
 
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("./features/auth/pages/RegisterPage"));
@@ -75,7 +77,8 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       {/* Auth routes */}
       <Route path="/login" element={
         <PublicRoute>
@@ -321,8 +324,9 @@ function AppRoutes() {
       </Route>
 
       {/* Catch all */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }
 

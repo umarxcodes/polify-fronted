@@ -7,6 +7,7 @@ import { Input } from "../../../components/ui/Input";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Badge } from "../../../components/ui/Badge";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { toast } from "sonner";
 
 const unwrap = (response) => response.data?.data || response.data;
 
@@ -25,8 +26,8 @@ export default function AssignmentModal({ isOpen, onClose, reportId, onAssigned 
       });
       const data = unwrap(response);
       setModerators(data?.users || data || []);
-    } catch (error) {
-      console.error("Failed to fetch moderators:", error);
+    } catch {
+      toast.error("Failed to fetch moderators");
     } finally {
       setLoading(false);
     }
@@ -47,8 +48,8 @@ export default function AssignmentModal({ isOpen, onClose, reportId, onAssigned 
       });
       onAssigned?.(unwrap(response));
       onClose();
-    } catch (error) {
-      console.error("Failed to assign:", error);
+    } catch {
+      toast.error("Failed to assign moderator");
     } finally {
       setAssigning(false);
     }
