@@ -6,7 +6,7 @@ const colorVariants = {
   violet: 'from-violet-400 to-violet-600',
   cyan: 'from-cyan-400 to-cyan-600',
   orange: 'from-orange-400 to-orange-600',
-  brand: 'from-brand-400 to-brand-600',
+  brand: 'from-primary-400 to-primary-600',
   danger: 'from-danger-400 to-danger-600',
   success: 'from-success-400 to-success-600',
 };
@@ -26,7 +26,7 @@ export const Avatar = ({ src, alt, fallback, size = 'md', color = 'brand', class
           ${sizeClasses[size]}
           rounded-full bg-gradient-to-br ${colorVariants[color] || colorVariants.brand}
           flex items-center justify-center text-white font-bold shadow-lg
-          ${src ? '' : ''}
+          overflow-hidden
         `}
       >
         {src ? (

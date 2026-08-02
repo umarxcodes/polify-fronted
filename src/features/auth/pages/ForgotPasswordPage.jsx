@@ -60,59 +60,48 @@ export default function ForgotPasswordPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
       className="w-full max-w-md"
     >
-      <div className="text-center mb-8">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/25">
-          <Mail size={24} className="text-white" />
-        </div>
-        <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
-          Reset your password
-        </h1>
-        <p className="text-surface-500 mt-2">
-          We'll email you a secure reset link.
-        </p>
-      </div>
-
       <Card className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl bg-danger-50 border border-danger-200 text-sm text-danger-700"
-            >
-              {error}
-            </motion.div>
-          )}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Forgot password?</h1>
+          <p className="text-surface-500 mt-1">Enter your email and we'll send you a reset link.</p>
+        </div>
 
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-danger-50 border border-danger-200 text-danger-700 text-sm" role="alert">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <Input
-            label="Email"
-            name="email"
+            label="Email address"
             type="email"
+            name="email"
+            icon={Mail}
             placeholder="you@example.com"
             required
           />
 
-          <Button type="submit" loading={loading} className="w-full" size="lg">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            loading={loading}
+          >
             {loading ? 'Sending...' : 'Send reset link'}
           </Button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-surface-100 text-center">
-          <p className="text-sm text-surface-600">
-            Remember your password?{' '}
-            <Link
-              to="/login"
-              className="text-brand-600 hover:text-brand-700 font-semibold"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
+        <p className="mt-6 text-center text-sm text-surface-600">
+          <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+            Back to sign in
+          </Link>
+        </p>
       </Card>
     </motion.div>
   )

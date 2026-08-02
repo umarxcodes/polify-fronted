@@ -27,9 +27,7 @@ export default function ResetPasswordPage() {
     const confirmPassword = formData.get('confirmPassword')?.toString() || ''
 
     if (!token) {
-      setError(
-        'This reset link is invalid or has expired. Please request a new one.'
-      )
+      setError('This reset link is invalid or has expired. Please request a new one.')
       setLoading(false)
       return
     }
@@ -66,87 +64,78 @@ export default function ResetPasswordPage() {
           <CheckCircle size={32} />
         </div>
         <h1 className="text-2xl font-bold text-surface-900 mb-2">
-          Password updated!
+          Password updated
         </h1>
-        <p className="text-surface-500">Redirecting you to sign in...</p>
+        <p className="text-surface-500 mb-6">
+          Redirecting you to sign in...
+        </p>
       </motion.div>
     )
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
       className="w-full max-w-md"
     >
-      <div className="text-center mb-8">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/25">
-          <Lock size={24} className="text-white" />
-        </div>
-        <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
-          Choose a new password
-        </h1>
-        <p className="text-surface-500 mt-2">
-          Create a password you don't use elsewhere.
-        </p>
-      </div>
-
       <Card className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl bg-danger-50 border border-danger-200 text-sm text-danger-700"
-            >
-              {error}
-            </motion.div>
-          )}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Reset password</h1>
+          <p className="text-surface-500 mt-1">Choose a strong new password for your account.</p>
+        </div>
 
-          <div className="relative">
-            <Input
-              label="New Password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Create a secure password"
-              required
-              minLength={8}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[38px] text-surface-400 hover:text-surface-600 transition-colors"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-danger-50 border border-danger-200 text-danger-700 text-sm" role="alert">
+            {error}
           </div>
+        )}
 
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <Input
-            label="Confirm Password"
-            name="confirmPassword"
-            type="password"
-            placeholder="Repeat your password"
+            label="New password"
+            type={showPassword ? "text" : "password"}
+            name="password"
+            icon={Lock}
+            placeholder="Min. 8 characters"
             required
-            minLength={8}
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
           />
 
-          <Button type="submit" loading={loading} className="w-full" size="lg">
+          <Input
+            label="Confirm password"
+            type={showPassword ? "text" : "password"}
+            name="confirmPassword"
+            icon={Lock}
+            placeholder="Repeat your password"
+            required
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            loading={loading}
+          >
             {loading ? 'Updating...' : 'Update password'}
           </Button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-surface-100 text-center">
-          <p className="text-sm text-surface-600">
-            Remember your password?{' '}
-            <Link
-              to="/login"
-              className="text-brand-600 hover:text-brand-700 font-semibold"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
+        <p className="mt-6 text-center text-sm text-surface-600">
+          <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+            Back to sign in
+          </Link>
+        </p>
       </Card>
     </motion.div>
   )

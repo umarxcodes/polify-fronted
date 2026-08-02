@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -44,6 +44,20 @@ const bottomNavItems = [
   { icon: User, label: 'Profile', href: '/profile' },
   { icon: Settings, label: 'Settings', href: '/profile/settings' },
 ]
+
+const pageLabels = {
+  dashboard: 'Dashboard', polls: 'Polls', create: 'Create poll', edit: 'Edit poll',
+  bookmarks: 'Bookmarks', analytics: 'Analytics', notifications: 'Notifications',
+  search: 'Search', profile: 'Profile', settings: 'Settings', votes: 'Vote history',
+}
+
+function getBreadcrumbs(pathname) {
+  const segments = pathname.split('/').filter(Boolean)
+  return segments.map((segment, index) => ({
+    label: pageLabels[segment] || segment.replace(/-/g, ' '),
+    current: index === segments.length - 1,
+  }))
+}
 
 function SidebarContent({ collapsed, onNavigate, user }) {
   return (
@@ -164,6 +178,19 @@ export default function DashboardLayout() {
   const { theme = 'system', toggleTheme = () => {} } = themeContext || {}
   const location = useLocation()
   const navigate = useNavigate()
+  const breadcrumbs = getBreadcrumbs(location.pathname)
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        document.querySelector('[data-global-search]')?.focus()
+      }
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const { data: unread } = useQuery({
     queryKey: ['notifications', 'unread'],
@@ -192,7 +219,7 @@ export default function DashboardLayout() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-surface-950 text-surface-100">
+    <div className="app-shell flex">
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div
@@ -204,7 +231,7 @@ export default function DashboardLayout() {
       {/* Mobile sidebar drawer */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-900 border-r border-surface-800
+          app-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r
           transform transition-transform duration-300 ease-out lg:hidden
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           w-[260px]
@@ -227,7 +254,7 @@ export default function DashboardLayout() {
       {/* Desktop sidebar */}
       <aside
         className={`
-          hidden lg:flex flex-col bg-surface-900 border-r border-surface-800
+          app-sidebar hidden lg:flex flex-col border-r
           transition-all duration-300 ease-out relative
           ${collapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
@@ -250,7 +277,7 @@ export default function DashboardLayout() {
         style={{ marginLeft: 0 }}
       >
         {/* Topbar */}
-        <header className="sticky top-0 z-40 h-16 bg-surface-900/80 backdrop-blur-xl border-b border-surface-800">
+        <header className="app-header sticky top-0 z-40 h-16 border-b backdrop-blur-xl">
           <div className="flex items-center justify-between h-full px-4 lg:px-6">
             <div className="flex items-center gap-3">
               <button
@@ -259,19 +286,32 @@ export default function DashboardLayout() {
               >
                 <Menu size={20} />
               </button>
-              <h1 className="text-lg font-semibold text-white">
-                {location.pathname === '/dashboard' ? 'Dashboard' : ''}
-              </h1>
+              <div>
+                <nav aria-label="Breadcrumb" className="app-breadcrumb hidden sm:flex items-center gap-1.5">
+                  <span>Pollify</span>
+                  {breadcrumbs.map(({ label, current }) => (
+                    <span key={label} className="flex items-center gap-1.5 capitalize">
+                      <span aria-hidden="true">/</span>
+                      <span aria-current={current ? 'page' : undefined}>{label}</span>
+                    </span>
+                  ))}
+                </nav>
+                <h1 className="app-page-title text-base font-semibold sm:mt-0.5">
+                  {breadcrumbs.at(-1)?.label || 'Dashboard'}
+                </h1>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
               {/* Search */}
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-surface-800 rounded-xl border border-surface-700 w-64">
-                <Search size={16} className="text-surface-500" />
+              <div className="app-search hidden md:flex items-center gap-2 px-3 py-2 rounded-xl w-64">
+                <Search size={16} aria-hidden="true" className="text-surface-500" />
                 <input
+                  data-global-search
+                  aria-label="Search polls and people"
                   type="text"
                   placeholder="Search..."
-                  className="flex-1 bg-transparent text-sm text-surface-100 placeholder:text-surface-500 outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-sm placeholder:text-surface-500 outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       const query = e.target.value.trim()
@@ -288,7 +328,8 @@ export default function DashboardLayout() {
               {/* Notifications */}
               <button
                 onClick={() => navigate('/notifications')}
-                className="relative p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
+                aria-label="View notifications"
+                className="app-icon-button relative p-2 rounded-xl transition-colors"
               >
                 <Bell size={20} />
                 {typeof unread === 'number' && unread > 0 && (
@@ -301,7 +342,7 @@ export default function DashboardLayout() {
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-xl text-surface-400 hover:text-surface-200 hover:bg-surface-800 transition-colors"
+                className="app-icon-button p-2 rounded-xl transition-colors"
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -329,7 +370,7 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">
+        <main className="app-content">
           <Outlet />
         </main>
       </div>

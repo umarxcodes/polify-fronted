@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import SettingsPage from '../features/user/pages/SettingsPage'
 
 const { mockGet, mockPatch } = vi.hoisted(() => {
@@ -78,6 +78,8 @@ describe('SettingsPage', () => {
     await waitFor(() =>
       expect(screen.getByDisplayValue('ava@example.com')).toBeInTheDocument()
     )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }))
 
     const emailToggle = screen.getByLabelText('Email notifications')
     expect(emailToggle).not.toBeChecked()

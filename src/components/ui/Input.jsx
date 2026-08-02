@@ -30,16 +30,12 @@ export const Input = ({
         )}
         <input
           className={`
-          input w-full px-4 py-2.5 text-sm
-          ${iconElement ? 'pl-10' : ''}
-          ${
-            dark
-              ? 'bg-surface-800 border-surface-700 text-white placeholder:text-surface-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
-              : 'border-surface-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
-          }
-          ${error ? 'input-error border-danger-500' : ''}
-          transition-all duration-200
-        `}
+            input w-full px-4 py-2.5 text-sm
+            ${iconElement ? 'pl-10' : ''}
+            ${dark ? 'input-dark' : ''}
+            ${error ? 'input-error' : ''}
+            transition-all duration-200
+          `}
           {...props}
         />
       </div>

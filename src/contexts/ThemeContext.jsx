@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
+  const [theme, setTheme] = useState(() => window.localStorage.getItem("theme") || "system");
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -13,14 +13,14 @@ export function ThemeProvider({ children }) {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggle = () => setTheme((prev) => {
+  const toggleTheme = () => setTheme((prev) => {
     if (prev === "light") return "dark";
     if (prev === "dark") return "system";
     return "light";
   });
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

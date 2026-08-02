@@ -17,10 +17,26 @@ const tabs = [
   { id: 'appearance', label: 'Appearance', icon: Palette },
 ]
 
+const preferenceFields = [
+  { key: 'emailNotifications', label: 'Email notifications', description: 'Receive account and moderation updates by email' },
+  { key: 'pushNotifications', label: 'Push notifications', description: 'Receive notifications in your browser' },
+  { key: 'voteNotifications', label: 'Vote activity', description: 'Get notified when someone votes on your polls' },
+  { key: 'commentNotifications', label: 'Comments and replies', description: 'Get notified about comments and replies' },
+  { key: 'pollNotifications', label: 'Poll updates', description: 'Get notified when polls you follow change or close' },
+  { key: 'systemNotifications', label: 'System announcements', description: 'Receive important service notifications' },
+  { key: 'marketingNotifications', label: 'Product updates', description: 'Receive occasional Pollify news and tips' },
+]
+
+const defaultPreferences = Object.fromEntries(
+  preferenceFields.map(({ key }) => [key, key !== 'marketingNotifications'])
+)
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [preferences, setPreferences] = useState(defaultPreferences)
+  const [savingPreference, setSavingPreference] = useState(null)
 
   const {
     register,
@@ -41,7 +57,10 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await apiClient.get('/users/me')
+        const [response, preferencesResponse] = await Promise.all([
+          apiClient.get('/users/me'),
+          apiClient.get('/notifications/preferences'),
+        ])
         const user = normalizeUserResponse(response.data)
         if (user) {
           reset({
@@ -52,6 +71,10 @@ export default function SettingsPage() {
             location: user.location || '',
             website: user.website || '',
           })
+        }
+        const storedPreferences = preferencesResponse.data?.data?.preferences
+        if (storedPreferences) {
+          setPreferences((current) => ({ ...current, ...storedPreferences }))
         }
       } catch {
         toast.error('Failed to load settings')
@@ -65,7 +88,13 @@ export default function SettingsPage() {
   const onSubmit = async (data) => {
     setSaving(true)
     try {
-      const response = await apiClient.patch('/users/profile', data)
+      const profile = { ...data }
+      delete profile.email
+      const { name, ...profileFields } = profile
+      const response = await apiClient.patch('/users/profile', {
+        ...profileFields,
+        fullName: name,
+      })
       const user = normalizeUserResponse(response.data)
       if (user) {
         reset({
@@ -86,6 +115,25 @@ export default function SettingsPage() {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const updatePreference = async (key, enabled) => {
+    const previous = preferences
+    const next = { ...preferences, [key]: enabled }
+    setPreferences(next)
+    setSavingPreference(key)
+    try {
+      const response = await apiClient.patch('/notifications/preferences', { [key]: enabled })
+      const saved = response.data?.data?.preferences
+      if (saved) setPreferences((current) => ({ ...current, ...saved }))
+    } catch (error) {
+      setPreferences(previous)
+      toast.error('Failed to update notification preference', {
+        description: error.response?.data?.message || error.message,
+      })
+    } finally {
+      setSavingPreference(null)
     }
   }
 
@@ -193,8 +241,12 @@ export default function SettingsPage() {
                     label="Email"
                     type="email"
                     {...register('email')}
+                    readOnly
                     error={errors.email?.message}
                   />
+                  <p className="-mt-3 text-xs text-surface-500">
+                    Email changes are managed through account verification.
+                  </p>
                   <div>
                     <label className="block text-sm font-medium text-surface-700 mb-1.5">
                       Bio
@@ -250,33 +302,7 @@ export default function SettingsPage() {
                 </p>
 
                 <div className="space-y-6">
-                  {[
-                    {
-                      label: 'Email notifications',
-                      description: 'Receive updates via email',
-                      enabled: true,
-                    },
-                    {
-                      label: 'Push notifications',
-                      description: 'Receive push notifications in your browser',
-                      enabled: true,
-                    },
-                    {
-                      label: 'Poll results',
-                      description: 'Get notified when polls you voted on end',
-                      enabled: true,
-                    },
-                    {
-                      label: 'New followers',
-                      description: 'Get notified when someone follows you',
-                      enabled: false,
-                    },
-                    {
-                      label: 'Weekly digest',
-                      description: 'Receive a weekly summary of activity',
-                      enabled: true,
-                    },
-                  ].map((setting) => (
+                  {preferenceFields.map((setting) => (
                     <div
                       key={setting.label}
                       className="flex items-center justify-between py-3 border-b border-surface-100 last:border-b-0"
@@ -292,7 +318,10 @@ export default function SettingsPage() {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          defaultChecked={setting.enabled}
+                          aria-label={setting.label}
+                          checked={preferences[setting.key]}
+                          disabled={savingPreference === setting.key}
+                          onChange={(event) => updatePreference(setting.key, event.target.checked)}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-surface-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
