@@ -18,6 +18,7 @@ import {
   LogOut,
   User,
   Flag,
+  AlertTriangle,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../lib/axios'
@@ -29,6 +30,7 @@ import { Dropdown } from '../components/ui/Dropdown'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
+  { icon: AlertTriangle, label: 'Moderation', href: '/admin/moderation' },
   { icon: Users, label: 'Users', href: '/admin/users' },
   { icon: FileText, label: 'Polls', href: '/admin/polls' },
   { icon: MessageSquare, label: 'Comments', href: '/admin/comments' },

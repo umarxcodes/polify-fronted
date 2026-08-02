@@ -31,6 +31,7 @@ const AdminCategoriesPage = lazy(() => import("./features/admin/pages/AdminCateg
 const AdminAuditLogsPage = lazy(() => import("./features/admin/pages/AdminAuditLogsPage"));
 const AdminAnalyticsPage = lazy(() => import("./features/admin/pages/AdminAnalyticsPage"));
 const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSettingsPage"));
+const AdminModerationDashboard = lazy(() => import("./features/admin/pages/AdminModerationDashboard"));
 const AdminReportsPage = lazy(() => import("./features/admin/pages/AdminReportsPage"));
 const AdminNotificationsPage = lazy(() => import("./features/admin/pages/AdminNotificationsPage"));
 const OrganizationsPage = lazy(() => import("./features/organizations/pages/OrganizationsPage"));
@@ -262,6 +263,11 @@ function AppRoutes() {
         <Route path="comments" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminCommentsPage />
+          </Suspense>
+        } />
+        <Route path="moderation" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminModerationDashboard />
           </Suspense>
         } />
         <Route path="reports" element={
