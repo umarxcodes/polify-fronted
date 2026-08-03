@@ -10,6 +10,7 @@ const AUTH_TOKEN_KEY = 'pollify_access_token'
 let accessToken = null
 let refreshPromise = null
 let unauthorizedHandler = null
+let csrfTokenValue = null
 
 function readStoredToken() {
   if (typeof window === 'undefined') return null
@@ -48,11 +49,16 @@ if (persistedToken) {
 }
 
 function csrfToken() {
+  if (csrfTokenValue) return csrfTokenValue
   if (typeof document === 'undefined') return undefined
   return document.cookie
     .split('; ')
     .find((cookie) => cookie.startsWith('csrf-token='))
     ?.split('=')[1]
+}
+
+function setCsrfToken(token) {
+  csrfTokenValue = typeof token === 'string' && token ? token : null
 }
 
 export const apiClient = axios.create({
@@ -89,7 +95,12 @@ apiClient.interceptors.request.use((config) => {
 })
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // The API exposes this header because its CSRF cookie belongs to the API
+    // domain and is unreadable from a separately deployed Vercel frontend.
+    setCsrfToken(response.headers?.['x-csrf-token'])
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
     const isRefreshRequest = originalRequest?.url === '/auth/refresh-token'
