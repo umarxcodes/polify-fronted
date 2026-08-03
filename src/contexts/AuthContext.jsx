@@ -14,6 +14,7 @@ import {
   refreshAccessToken,
   setAuthToken,
   setUnauthorizedHandler,
+  fetchCsrfToken,
 } from '../lib/axios'
 
 const AuthContext = createContext(null)
@@ -54,7 +55,7 @@ export function AuthProvider({ children }) {
       setIsLoading(true)
       setRestoreError(null)
       try {
-        await authService.getCsrfToken().catch(() => undefined)
+        await fetchCsrfToken().catch(() => undefined)
 
         if (!getAuthToken()) {
           const accessToken = await refreshAccessToken()
@@ -73,7 +74,7 @@ export function AuthProvider({ children }) {
         const status = error?.response?.status
         const isAuthFailure = status === 401 || error?.message === 'No access token returned'
         if (isAuthFailure) {
-          await authService.getCsrfToken().catch(() => undefined)
+          await fetchCsrfToken().catch(() => undefined)
           try {
             const accessToken = await refreshAccessToken()
             if (accessToken && active) {
