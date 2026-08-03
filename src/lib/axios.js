@@ -6,6 +6,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '../constants/api'
 
 const AUTH_TOKEN_KEY = 'pollify_access_token'
+const CSRF_TOKEN_KEY = 'pollify_csrf_token'
 
 let accessToken = null
 let refreshPromise = null
@@ -23,6 +24,20 @@ function writeStoredToken(token) {
     window.localStorage.setItem(AUTH_TOKEN_KEY, token)
   } else {
     window.localStorage.removeItem(AUTH_TOKEN_KEY)
+  }
+}
+
+function readStoredCsrfToken() {
+  if (typeof window === 'undefined') return null
+  return window.localStorage.getItem(CSRF_TOKEN_KEY)
+}
+
+function writeStoredCsrfToken(token) {
+  if (typeof window === 'undefined') return
+  if (token) {
+    window.localStorage.setItem(CSRF_TOKEN_KEY, token)
+  } else {
+    window.localStorage.removeItem(CSRF_TOKEN_KEY)
   }
 }
 
@@ -48,9 +63,19 @@ if (persistedToken) {
   accessToken = persistedToken
 }
 
+const persistedCsrfToken = readStoredCsrfToken()
+if (persistedCsrfToken) {
+  csrfTokenValue = persistedCsrfToken
+}
+
 function csrfToken() {
   if (csrfTokenValue) return csrfTokenValue
   if (typeof document === 'undefined') return undefined
+  const stored = readStoredCsrfToken()
+  if (stored) {
+    csrfTokenValue = stored
+    return stored
+  }
   return document.cookie
     .split('; ')
     .find((cookie) => cookie.startsWith('csrf-token='))
@@ -59,6 +84,14 @@ function csrfToken() {
 
 function setCsrfToken(token) {
   csrfTokenValue = typeof token === 'string' && token ? token : null
+  writeStoredCsrfToken(csrfTokenValue)
+}
+
+export async function fetchCsrfToken() {
+  const response = await apiClient.get('/csrf-token')
+  const token = response.headers?.['x-csrf-token'] || response.data?.data?.csrfToken
+  if (token) setCsrfToken(token)
+  return token
 }
 
 export const apiClient = axios.create({
@@ -96,8 +129,6 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    // The API exposes this header because its CSRF cookie belongs to the API
-    // domain and is unreadable from a separately deployed Vercel frontend.
     const csrf = response.headers?.['x-csrf-token'] || response.data?.data?.csrfToken
     if (csrf) setCsrfToken(csrf)
     return response
@@ -112,6 +143,17 @@ apiClient.interceptors.response.use(
       isRefreshRequest ||
       !getAuthToken()
     ) {
+      // Recover from CSRF mismatches in production by refreshing the token once.
+      if (error.response?.status === 403 && !originalRequest?._csrfRetry) {
+        originalRequest._csrfRetry = true
+        try {
+          await fetchCsrfToken()
+          originalRequest.headers['x-csrf-token'] = csrfToken() || ''
+          return apiClient(originalRequest)
+        } catch {
+          return Promise.reject(error)
+        }
+      }
       return Promise.reject(error)
     }
 

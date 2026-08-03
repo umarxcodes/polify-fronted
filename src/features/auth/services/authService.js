@@ -1,9 +1,10 @@
 /** Normalizes the API envelope so components do not depend on transport details. */
 import { authApi } from "../api/authApi";
+import { fetchCsrfToken } from "../../../lib/axios";
 const unwrap = (response) => response.data?.data;
 
 export const authService = {
-  getCsrfToken: async () => unwrap(await authApi.getCsrfToken())?.csrfToken,
+  getCsrfToken: async () => fetchCsrfToken(),
   login: async (payload) => unwrap(await authApi.login(payload)),
   register: async (payload) => {
     const { profileImage, ...fields } = payload;
