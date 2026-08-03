@@ -9,17 +9,24 @@ import {
   useState,
 } from 'react'
 import { authService } from '../features/auth/services/authService'
-import { setAuthToken, setUnauthorizedHandler } from '../lib/axios'
+import {
+  getAuthToken,
+  refreshAccessToken,
+  setAuthToken,
+  setUnauthorizedHandler,
+} from '../lib/axios'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [restoreError, setRestoreError] = useState(null)
 
   const clearAuth = useCallback(() => {
     setAuthToken(null)
     setUser(null)
+    setRestoreError(null)
   }, [])
 
   const establishSession = useCallback((session) => {
@@ -29,6 +36,7 @@ export function AuthProvider({ children }) {
       setAuthToken(null)
     }
     setUser(session?.user ?? null)
+    setRestoreError(null)
   }, [])
 
   const signOut = useCallback(async () => {
@@ -43,31 +51,36 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true
     const restoreSession = async () => {
+      setIsLoading(true)
+      setRestoreError(null)
       try {
-        await authService.getCsrfToken()
-        const session = await authService.refreshToken()
-        if (!active) return
-
-        if (!session?.accessToken) {
-          clearAuth()
-          return
+        // A persisted access token can restore the user immediately. If it has
+        // expired, the Axios interceptor refreshes it once and retries /me.
+        // Only use the refresh cookie directly when there is no access token.
+        if (!getAuthToken()) {
+          // CSRF setup is best-effort: an unavailable CSRF endpoint must never
+          // invalidate an otherwise valid refresh-cookie session.
+          await authService.getCsrfToken().catch(() => undefined)
+          const accessToken = await refreshAccessToken()
+          if (!accessToken) throw new Error('No access token returned')
+          setAuthToken(accessToken)
         }
 
-        setAuthToken(session.accessToken)
-
-        try {
-          const currentUser = await authService.getMe()
-          if (active && currentUser) {
-            setUser(currentUser)
-          }
-        } catch {
-          if (active) {
-            setUser(null)
-          }
-        }
-      } catch {
+        const currentUser = await authService.getMe()
+        if (!currentUser) throw new Error('No authenticated user returned')
         if (active) {
+          setUser(currentUser)
+          setRestoreError(null)
+        }
+      } catch (error) {
+        if (!active) return
+        // A 401 means both the access token and refresh-cookie session are no
+        // longer usable. Network/server failures are not logouts: preserve the
+        // existing token and let the route show a recoverable loading state.
+        if (error.response?.status === 401 || error.message === 'No access token returned') {
           clearAuth()
+        } else {
+          setRestoreError(error)
         }
       } finally {
         if (active) setIsLoading(false)
@@ -88,8 +101,8 @@ export function AuthProvider({ children }) {
   }, [clearAuth])
 
   const value = useMemo(
-    () => ({ user, isLoading, establishSession, signOut }),
-    [user, isLoading, establishSession, signOut]
+    () => ({ user, isLoading, restoreError, establishSession, signOut }),
+    [user, isLoading, restoreError, establishSession, signOut]
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

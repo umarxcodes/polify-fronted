@@ -34,6 +34,10 @@ export function getAuthToken() {
   return accessToken ?? readStoredToken()
 }
 
+export function hasAuthToken() {
+  return Boolean(getAuthToken())
+}
+
 export const setUnauthorizedHandler = (handler) => {
   unauthorizedHandler = handler
 }
@@ -44,6 +48,7 @@ if (persistedToken) {
 }
 
 function csrfToken() {
+  if (typeof document === 'undefined') return undefined
   return document.cookie
     .split('; ')
     .find((cookie) => cookie.startsWith('csrf-token='))
@@ -55,6 +60,21 @@ export const apiClient = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
+
+/**
+ * Refreshes the cookie-backed session exactly once, even when several requests
+ * fail together (or React Strict Mode remounts the authentication provider).
+ */
+export function refreshAccessToken() {
+  refreshPromise ??= apiClient
+    .post('/auth/refresh-token')
+    .then((response) => response.data?.data?.accessToken || response.data?.accessToken)
+    .finally(() => {
+      refreshPromise = null
+    })
+
+  return refreshPromise
+}
 
 apiClient.interceptors.request.use((config) => {
   const token = getAuthToken()
@@ -78,7 +98,7 @@ apiClient.interceptors.response.use(
       error.response?.status !== 401 ||
       originalRequest?._retry ||
       isRefreshRequest ||
-      !accessToken
+      !getAuthToken()
     ) {
       return Promise.reject(error)
     }
@@ -86,14 +106,7 @@ apiClient.interceptors.response.use(
     originalRequest._retry = true
 
     try {
-      refreshPromise ??= apiClient
-        .post('/auth/refresh-token')
-        .then((response) => response.data?.data?.accessToken)
-        .finally(() => {
-          refreshPromise = null
-        })
-
-      const token = await refreshPromise
+      const token = await refreshAccessToken()
       if (!token) throw new Error('Session expired')
 
       setAuthToken(token)

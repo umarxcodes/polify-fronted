@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
@@ -44,9 +44,10 @@ const navItems = [
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const { data: stats } = useQuery({
     queryKey: ['admin', 'stats'],
@@ -84,8 +85,8 @@ export default function AdminLayout() {
     { label: 'Dashboard', icon: LayoutDashboard, onClick: () => window.location.href = '/dashboard' },
     { label: 'Toggle theme', icon: theme === 'dark' ? Sun : Moon, onClick: toggleTheme },
     { label: 'Logout', icon: LogOut, onClick: async () => {
-      await apiClient.post('/auth/logout').catch(() => {})
-      window.location.href = '/login'
+      await signOut()
+      navigate('/login', { replace: true })
     }, danger: true },
   ]
 

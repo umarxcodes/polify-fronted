@@ -51,6 +51,14 @@ import {
 import { useDebounce } from "../hooks/useDebounce";
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
+const asArray = (value) => (Array.isArray(value) ? value : []);
+const categoryLabel = (category) => {
+  if (typeof category === "string") return category;
+  if (category && typeof category === "object") {
+    return category.name || category.title || category.label || category._id || "General";
+  }
+  return "General";
+};
 const formatDate = (value) => {
   if (!value) return "Recently";
   const date = new Date(value);
@@ -97,6 +105,8 @@ function StatCard({ icon: Icon, label, value, change, delay = 0, compact = false
 }
 
 function PollCard({ poll, index = 0, showDescription = false }) {
+  const category = categoryLabel(poll.category);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -108,7 +118,7 @@ function PollCard({ poll, index = 0, showDescription = false }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary" size="sm" dark>
-                {poll.category || "General"}
+                {category}
               </Badge>
               {poll.isActive !== false && (
                 <Badge variant="success" size="sm" dot dark>
@@ -311,9 +321,9 @@ function CategoriesWidget({ categories, loading }) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.03 }}
             >
-              <Link to={`/search?category=${encodeURIComponent(category.name || category)}`}>
+              <Link to={`/search?category=${encodeURIComponent(categoryLabel(category))}`}>
                 <Badge variant="secondary" size="sm" dark className="cursor-pointer hover:bg-surface-700 transition-colors">
-                  {category.name || category}
+                  {categoryLabel(category)}
                 </Badge>
               </Link>
             </motion.div>
@@ -518,13 +528,15 @@ export default function DashboardPage() {
 
   const stats = statsData || {};
   const userStatsData = userStats || {};
-  const latestPolls = latestData?.polls || latestData || [];
-  const trendingPolls = trendingData?.polls || trendingData || [];
-  const recommendedPolls = recommendedData?.polls || recommendedData || [];
-  const notifications = notificationsData?.notifications || notificationsData || [];
+  // Endpoint envelopes differ across deployments. Never let an unexpected
+  // object reach rendering code that calls .slice()/.map().
+  const latestPolls = asArray(latestData?.polls || latestData);
+  const trendingPolls = asArray(trendingData?.polls || trendingData);
+  const recommendedPolls = asArray(recommendedData?.polls || recommendedData);
+  const notifications = asArray(notificationsData?.notifications || notificationsData);
   const unreadCount = typeof unreadData === "number" ? unreadData : unreadData?.count || 0;
   const profile = userData?.user || userData || user || {};
-  const categories = categoriesData?.categories || categoriesData || [];
+  const categories = asArray(categoriesData?.categories || categoriesData);
 
   const quickActions = [
     { icon: Plus, label: "Create Poll", href: "/polls/create", variant: "primary" },

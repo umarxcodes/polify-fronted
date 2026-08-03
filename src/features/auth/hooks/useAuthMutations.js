@@ -36,9 +36,8 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: authApi.logout,
-    onSettled: () => {
-      signOut();
+    mutationFn: signOut,
+    onSuccess: () => {
       queryClient.clear();
     },
   });

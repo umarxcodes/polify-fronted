@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion';
 import { SearchX } from 'lucide-react';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -23,7 +21,7 @@ const itemVariants = {
   },
 };
 
-export const NotFoundPage = ({ onGoBack, dark }) => {
+export const NotFoundPage = ({ onGoBack }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--app-bg)]">
       <motion.div
@@ -32,7 +30,7 @@ export const NotFoundPage = ({ onGoBack, dark }) => {
         animate="visible"
         className="w-full max-w-md"
       >
-        <Card dark={dark} className="text-center py-10 px-6 sm:px-8">
+        <div className="text-center py-10 px-6 sm:px-8 bg-white dark:bg-surface-800 rounded-2xl shadow-sm border border-surface-200 dark:border-surface-700">
           <motion.div variants={itemVariants} className="flex justify-center mb-5">
             <div className="w-16 h-16 rounded-2xl bg-info-500/10 flex items-center justify-center text-info-500">
               <SearchX size={32} strokeWidth={1.8} />
@@ -53,19 +51,28 @@ export const NotFoundPage = ({ onGoBack, dark }) => {
 
           <motion.div variants={itemVariants} className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             {onGoBack ? (
-              <Button variant="primary" size="md" onClick={onGoBack}>
+              <button
+                onClick={onGoBack}
+                className="inline-flex items-center justify-center gap-2 font-semibold rounded-xl px-4 py-2.5 bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+              >
                 Go Back
-              </Button>
+              </button>
             ) : (
-              <Button variant="primary" size="md" onClick={() => window.history.back()}>
+              <button
+                onClick={() => window.history.back()}
+                className="inline-flex items-center justify-center gap-2 font-semibold rounded-xl px-4 py-2.5 bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+              >
                 Go Back
-              </Button>
+              </button>
             )}
-            <Button variant="secondary" size="md" onClick={() => (window.location.href = '/')}>
+            <button
+              onClick={() => (window.location.href = '/')}
+              className="inline-flex items-center justify-center gap-2 font-semibold rounded-xl px-4 py-2.5 bg-surface-100 dark:bg-surface-700 text-surface-900 dark:text-white hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
+            >
               Go Home
-            </Button>
+            </button>
           </motion.div>
-        </Card>
+        </div>
       </motion.div>
     </div>
   );
