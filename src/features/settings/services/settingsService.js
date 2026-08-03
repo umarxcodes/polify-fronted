@@ -1,7 +1,25 @@
-import { getSettings, updateSettings, changePassword } from "../api/settingsApi";
+import {
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar,
+  changePassword,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  deleteAccount,
+  getUserStats,
+  getCurrentUser,
+} from "../endpoints/settingsApi";
 
 export const settingsService = {
-  getSettings,
-  updateSettings,
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+  deleteAvatar,
   changePassword,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  deleteAccount,
+  getUserStats,
+  getCurrentUser,
 };

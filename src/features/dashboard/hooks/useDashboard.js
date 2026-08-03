@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { apiClient } from "../../../lib/axios";
+import { getUserStats, getCategories } from "../api/dashboardApi";
 
 export function useDashboard() {
   return useQuery({
@@ -63,17 +63,7 @@ export function usePollDetail(pollId) {
   });
 }
 
-export function useBookmarks() {
-  return useQuery({
-    queryKey: ["bookmarks"],
-    queryFn: async () => {
-      const response = await apiClient.get("/bookmarks");
-      return response.data?.data || response.data;
-    },
-  });
-}
-
-export function useNotifications() {
+export function useNotificationsQuery() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
@@ -83,7 +73,7 @@ export function useNotifications() {
   });
 }
 
-export function useSearch(query) {
+export function useSearchQuery(query) {
   return useQuery({
     queryKey: ["search", query],
     queryFn: async () => {
@@ -110,33 +100,18 @@ export function useAdminDashboard() {
   });
 }
 
-export function useToggleBookmark(pollId) {
-  const queryClient = useQueryClient();
+export function useUserStats() {
+  return useQuery({
+    queryKey: ["dashboard", "userStats"],
+    queryFn: getUserStats,
+    staleTime: 60_000,
+  });
+}
 
-  return useMutation({
-    mutationFn: async () => {
-      const response = await apiClient.post(`/bookmarks/${pollId}`);
-      return response.data;
-    },
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["bookmarks"] });
-      const previous = queryClient.getQueryData(["bookmarks"]);
-      queryClient.setQueryData(["bookmarks"], (old) => {
-        const list = old?.bookmarks || old || [];
-        const exists = list.some(b => b.pollId === pollId);
-        if (exists) {
-          return { ...old, bookmarks: list.filter(b => b.pollId !== pollId) };
-        }
-        return { ...old, bookmarks: [...list, { pollId, savedAt: new Date() }] };
-      });
-      return { previous };
-    },
-    onError: (err, _, context) => {
-      queryClient.setQueryData(["bookmarks"], context.previous);
-      toast.error("Failed to update bookmark", { description: err.message });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
-    },
+export function useCategories() {
+  return useQuery({
+    queryKey: ["dashboard", "categories"],
+    queryFn: getCategories,
+    staleTime: 5 * 60_000,
   });
 }

@@ -1,7 +1,8 @@
-import { getDashboardStats, getRecentActivity, getPollAnalytics } from "../api/dashboardApi";
+import { getDashboardStats, getRecentActivity, getTrendingPolls, getPollAnalytics } from "../api/dashboardApi";
 
 export const dashboardService = {
   getDashboardStats,
   getRecentActivity,
+  getTrendingPolls,
   getPollAnalytics,
 };

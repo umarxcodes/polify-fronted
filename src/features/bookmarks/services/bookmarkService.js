@@ -1,7 +1,15 @@
-import { getBookmarks, addBookmark, removeBookmark } from "../api/bookmarksApi";
+import {
+  getBookmarks,
+  addBookmark,
+  removeBookmark,
+  checkBookmarkStatus,
+  getBookmarkStats,
+} from "../api/bookmarksApi";
 
 export const bookmarkService = {
   getBookmarks,
   addBookmark,
   removeBookmark,
+  checkBookmarkStatus,
+  getBookmarkStats,
 };

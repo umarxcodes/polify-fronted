@@ -7,6 +7,11 @@ export const pollApi = {
   updatePoll: (id, data) => apiClient.patch(`/polls/${id}`, data),
   deletePoll: (id) => apiClient.delete(`/polls/${id}`),
   vote: (pollId, optionId) =>
-    apiClient.post(`/votes/polls/${pollId}/vote`, { optionId }),
-  getVotes: (pollId) => apiClient.get(`/votes/polls/${pollId}/results`),
+    apiClient.post(`/votes/polls/${pollId}/vote`, { options: [optionId] }),
+  getVotes: (pollId) => apiClient.get(`/polls/${pollId}/results`),
+  getPollResults: (pollId) => apiClient.get(`/polls/${pollId}/results`),
+  checkBookmarkStatus: (pollId) =>
+    apiClient.get(`/bookmarks/${pollId}/status`),
+  addBookmark: (pollId) => apiClient.post(`/bookmarks/${pollId}`),
+  removeBookmark: (pollId) => apiClient.delete(`/bookmarks/${pollId}`),
 };

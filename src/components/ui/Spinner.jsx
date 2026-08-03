@@ -47,27 +47,4 @@ export const Spinner = ({ size = 'md', className = '', color = 'brand' }) => {
   );
 };
 
-export const LoadingOverlay = ({ message = 'Loading...' }) => (
-  <div className="flex flex-col items-center justify-center py-20">
-    <Spinner size="lg" />
-    <p className="mt-4 text-sm text-surface-500">{message}</p>
-  </div>
-);
-
-export const LoadingPage = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="flex flex-col items-center">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25 mb-4">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 20V10" />
-          <path d="M18 20V4" />
-          <path d="M6 20v-4" />
-        </svg>
-      </div>
-      <Spinner size="md" />
-      <p className="mt-3 text-sm text-surface-500">Loading Pollify...</p>
-    </div>
-  </div>
-);
-
 export default Spinner;

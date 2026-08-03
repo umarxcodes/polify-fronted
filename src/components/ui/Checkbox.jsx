@@ -46,45 +46,6 @@ export const Checkbox = forwardRef(({ checked, onChange, label, disabled, classN
   </label>
 ));
 
-export const Radio = forwardRef(({ checked, onChange, label, disabled, className = '', ...props }, ref) => (
-  <label className={`
-    inline-flex items-center gap-2.5 cursor-pointer
-    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-    ${className}
-  `}>
-    <div className="relative">
-      <input
-        ref={ref}
-        type="radio"
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        className="sr-only"
-        {...props}
-      />
-      <motion.div
-        animate={{
-          borderColor: checked ? 'var(--color-brand-500)' : 'var(--color-surface-300)',
-        }}
-        className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-      >
-        <AnimatePresence>
-          {checked && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ type: 'spring', bounce: 0.4, duration: 0.3 }}
-              className="w-2.5 h-2.5 rounded-full bg-brand-500"
-            />
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
-    {label && <span className="text-sm text-surface-700 select-none">{label}</span>}
-  </label>
-));
-
 export const Switch = forwardRef(({ checked, onChange, label, disabled, className = '', ...props }, ref) => (
   <label className={`
     inline-flex items-center gap-2.5 cursor-pointer

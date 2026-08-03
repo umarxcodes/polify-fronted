@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-
 import { Calendar, Vote, FileText, TrendingUp, BarChart3 } from "lucide-react";
+import { resolveIcon } from "../../../components/ui/iconUtils";
 import { apiClient } from "../../../lib/axios";
 import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
-
-
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { normalizeApiResponse } from "../../../utils/apiResponse";
 
 function ActivityTimeline({ activities }) {
   const icons = {
@@ -30,8 +29,12 @@ function ActivityTimeline({ activities }) {
             {icons[activity.type] || <Calendar size={16} />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-surface-900">{activity.description}</p>
-            <p className="text-xs text-surface-500 mt-1">{activity.timeAgo}</p>
+            <p className="text-sm text-surface-900">
+              {activity.description}
+            </p>
+            <p className="text-xs text-surface-500 mt-1">
+              {activity.timeAgo}
+            </p>
           </div>
         </motion.div>
       ))}
@@ -43,7 +46,11 @@ function StatsGrid({ stats }) {
   const statsItems = [
     { label: "Total Polls", value: stats?.totalPolls || 0, icon: FileText },
     { label: "Total Votes", value: stats?.totalVotes || 0, icon: Vote },
-    { label: "Engagement", value: `${stats?.engagementRate || 0}%`, icon: TrendingUp },
+    {
+      label: "Engagement",
+      value: `${stats?.engagementRate || 0}%`,
+      icon: TrendingUp,
+    },
     { label: "Rank", value: `#${stats?.rank || 1}`, icon: BarChart3 },
   ];
 
@@ -58,10 +65,14 @@ function StatsGrid({ stats }) {
         >
           <Card className="p-6 text-center">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 flex items-center justify-center text-brand-600 mx-auto mb-3">
-              <stat.icon size={22} />
+              {resolveIcon(stat.icon, 22)}
             </div>
-            <p className="text-2xl font-bold text-surface-900">{stat.value}</p>
-            <p className="text-sm text-surface-500 mt-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-surface-900">
+              {stat.value}
+            </p>
+            <p className="text-sm text-surface-500 mt-1">
+              {stat.label}
+            </p>
           </Card>
         </motion.div>
       ))}
@@ -74,7 +85,7 @@ export default function ProfileActivityPage() {
     queryKey: ["profile", "activity"],
     queryFn: async () => {
       const response = await apiClient.get("/users/me/activity");
-      return response.data?.data || response.data;
+      return normalizeApiResponse(response.data);
     },
   });
 
@@ -100,22 +111,37 @@ export default function ProfileActivityPage() {
     return (
       <div className="text-center py-12">
         <p className="text-danger-600">{error.message}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Try again</Button>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-4"
+        >
+          Try again
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-surface-900">Activity</h2>
-        <p className="text-surface-500 mt-1">Your recent Pollify activity</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-surface-900">Activity</h2>
+          <p className="text-surface-500 mt-1">
+            Your recent Pollify activity
+          </p>
+        </div>
+      </motion.div>
 
       <StatsGrid stats={data?.stats} />
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-surface-900 mb-4">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-surface-900 mb-4">
+          Recent Activity
+        </h3>
         <ActivityTimeline activities={data?.activities || []} />
       </Card>
     </div>

@@ -1,15 +1,17 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { Toaster } from "sonner";
 import { Skeleton } from "./components/ui/Skeleton";
 import AuthLayout from "./layouts/AuthLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import ProfileLayout from "./layouts/ProfileLayout";
 import RootLayout from "./layouts/RootLayout";
 import { ProtectedRoute, PublicRoute } from "./routes/ProtectedRoute";
 import { ROLES } from "./constants/routes";
+import ErrorBoundary from "./components/feedback/ErrorBoundary";
+import { NotFoundPage } from "./features/errors/pages/NotFoundPage";
 
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("./features/auth/pages/RegisterPage"));
@@ -19,16 +21,36 @@ const ResetPasswordPage = lazy(() => import("./features/auth/pages/ResetPassword
 const DashboardPage = lazy(() => import("./features/dashboard/pages/DashboardPage"));
 const PollsPage = lazy(() => import("./features/polls/pages/PollsPage"));
 const CreatePollPage = lazy(() => import("./features/polls/pages/CreatePollPage"));
+const EditPollPage = lazy(() => import("./features/polls/pages/EditPollPage"));
 const PollDetailPage = lazy(() => import("./features/polls/pages/PollDetailPage"));
 const SearchPage = lazy(() => import("./features/search/pages/SearchPage"));
-const AdminPage = lazy(() => import("./features/admin/pages/AdminPage"));
-const ProfileActivityPage = lazy(() => import("./features/user/pages/ProfileActivityPage"));
+const DiscoveryPage = lazy(() => import("./features/search/pages/DiscoveryPage"));
+const AdminDashboardPage = lazy(() => import("./features/admin/pages/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("./features/admin/pages/AdminUsersPage"));
+const AdminPollsPage = lazy(() => import("./features/admin/pages/AdminPollsPage"));
+const AdminCommentsPage = lazy(() => import("./features/admin/pages/AdminCommentsPage"));
+const AdminCategoriesPage = lazy(() => import("./features/admin/pages/AdminCategoriesPage"));
+const AdminAuditLogsPage = lazy(() => import("./features/admin/pages/AdminAuditLogsPage"));
+const AdminAnalyticsPage = lazy(() => import("./features/admin/pages/AdminAnalyticsPage"));
+const AdminSettingsPage = lazy(() => import("./features/admin/pages/AdminSettingsPage"));
+const AdminModerationDashboard = lazy(() => import("./features/admin/pages/AdminModerationDashboard"));
+const AdminReportsPage = lazy(() => import("./features/admin/pages/AdminReportsPage"));
+const AdminNotificationsPage = lazy(() => import("./features/admin/pages/AdminNotificationsPage"));
+const OrganizationsPage = lazy(() => import("./features/organizations/pages/OrganizationsPage"));
+const OrganizationDetailPage = lazy(() => import("./features/organizations/pages/OrganizationDetailPage"));
 const ProfilePollsPage = lazy(() => import("./features/user/pages/ProfilePollsPage"));
-const SettingsPage = lazy(() => import("./features/user/pages/SettingsPage"));
+const SettingsPage = lazy(() => import("./features/settings/pages/SettingsPage"));
 const BookmarksPage = lazy(() => import("./features/bookmarks/pages/BookmarksPage"));
+const ProfilePage = lazy(() => import("./features/user/pages/ProfilePage"));
+const EditProfilePage = lazy(() => import("./features/user/pages/EditProfilePage"));
+const PublicProfilePage = lazy(() => import("./features/user/pages/PublicProfilePage"));
+const FollowersPage = lazy(() => import("./features/user/pages/FollowersPage"));
+const FollowingPage = lazy(() => import("./features/user/pages/FollowingPage"));
 const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage"));
 const AnalyticsPage = lazy(() => import("./features/analytics/pages/AnalyticsPage"));
+const PollAnalyticsPage = lazy(() => import("./features/analytics/pages/PollAnalytics"));
 const ReportsPage = lazy(() => import("./features/reports/pages/ReportsPage"));
+const VoteHistoryPage = lazy(() => import("./features/voting/pages/VoteHistoryPage"));
 
 function LoadingFallback() {
   return (
@@ -55,7 +77,8 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       {/* Auth routes */}
       <Route path="/login" element={
         <PublicRoute>
@@ -130,14 +153,29 @@ function AppRoutes() {
             <PollDetailPage />
           </Suspense>
         } />
-        <Route path="search" element={
+        <Route path="polls/:id/edit" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <EditPollPage />
+          </Suspense>
+        } />
+                <Route path="search" element={
           <Suspense fallback={<LoadingFallback />}>
             <SearchPage />
+          </Suspense>
+        } />
+        <Route path="discover" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <DiscoveryPage />
           </Suspense>
         } />
         <Route path="analytics" element={
           <Suspense fallback={<LoadingFallback />}>
             <AnalyticsPage />
+          </Suspense>
+        } />
+        <Route path="analytics/polls/:pollId" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <PollAnalyticsPage />
           </Suspense>
         } />
         <Route path="bookmarks" element={
@@ -155,40 +193,54 @@ function AppRoutes() {
             <ReportsPage />
           </Suspense>
         } />
+        <Route path="votes/history" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <VoteHistoryPage />
+          </Suspense>
+        } />
       </Route>
 
       {/* Profile routes */}
       <Route path="/profile" element={
         <ProtectedRoute>
-          <ProfileLayout />
+          <ProfilePage />
         </ProtectedRoute>
-      }>
-        <Route index element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileActivityPage />
-          </Suspense>
-        } />
-        <Route path="activity" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfileActivityPage />
-          </Suspense>
-        } />
-        <Route path="polls" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ProfilePollsPage />
-          </Suspense>
-        } />
-        <Route path="bookmarks" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <BookmarksPage />
-          </Suspense>
-        } />
-        <Route path="settings" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <SettingsPage />
-          </Suspense>
-        } />
-      </Route>
+      } />
+      <Route path="/profile/edit" element={
+        <ProtectedRoute>
+          <EditProfilePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/polls" element={
+        <ProtectedRoute>
+          <ProfilePollsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/bookmarks" element={
+        <ProtectedRoute>
+          <BookmarksPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/settings" element={
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/:username" element={
+        <ProtectedRoute>
+          <PublicProfilePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/:username/followers" element={
+        <ProtectedRoute>
+          <FollowersPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile/:username/following" element={
+        <ProtectedRoute>
+          <FollowingPage />
+        </ProtectedRoute>
+      } />
 
       {/* Admin routes */}
       <Route path="/admin" element={
@@ -198,29 +250,83 @@ function AppRoutes() {
       }>
         <Route index element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminDashboardPage />
           </Suspense>
         } />
         <Route path="users" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminUsersPage />
           </Suspense>
         } />
         <Route path="polls" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminPollsPage />
+          </Suspense>
+        } />
+        <Route path="comments" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCommentsPage />
+          </Suspense>
+        } />
+        <Route path="moderation" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminModerationDashboard />
           </Suspense>
         } />
         <Route path="reports" element={
           <Suspense fallback={<LoadingFallback />}>
-            <AdminPage />
+            <AdminReportsPage />
+          </Suspense>
+        } />
+        <Route path="notifications" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminNotificationsPage />
+          </Suspense>
+        } />
+        <Route path="categories" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCategoriesPage />
+          </Suspense>
+        } />
+        <Route path="audit-logs" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminAuditLogsPage />
+          </Suspense>
+        } />
+        <Route path="analytics" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminAnalyticsPage />
+          </Suspense>
+        } />
+        <Route path="settings" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminSettingsPage />
+          </Suspense>
+        } />
+      </Route>
+
+      {/* Organization routes */}
+      <Route path="/organizations" element={
+        <ProtectedRoute>
+          <RootLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={
+          <Suspense fallback={<LoadingFallback />}>
+            <OrganizationsPage />
+          </Suspense>
+        } />
+        <Route path=":slug" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <OrganizationDetailPage />
           </Suspense>
         } />
       </Route>
 
       {/* Catch all */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }
 
@@ -228,23 +334,25 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <RootLayout>
-          <Suspense fallback={<LoadingFallback />}>
-            <AppRoutes />
-          </Suspense>
-        </RootLayout>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            classNames: {
-              error: "bg-danger-500 text-white",
-              success: "bg-success-500 text-white",
-              warning: "bg-warning-500 text-white",
-              info: "bg-brand-500 text-white",
-            },
-            duration: 4000,
-          }}
-        />
+        <ThemeProvider>
+          <RootLayout>
+            <Suspense fallback={<LoadingFallback />}>
+              <AppRoutes />
+            </Suspense>
+          </RootLayout>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              classNames: {
+                error: "bg-danger-500 text-white",
+                success: "bg-success-500 text-white",
+                warning: "bg-warning-500 text-white",
+                info: "bg-brand-500 text-white",
+              },
+              duration: 4000,
+            }}
+          />
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

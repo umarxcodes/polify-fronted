@@ -8,4 +8,8 @@ export const pollService = {
   deletePoll: (id) => pollApi.deletePoll(id),
   vote: (pollId, optionId) => pollApi.vote(pollId, optionId),
   getVotes: (pollId) => pollApi.getVotes(pollId),
+  getPollResults: (pollId) => pollApi.getPollResults(pollId),
+  checkBookmarkStatus: (pollId) => pollApi.checkBookmarkStatus(pollId),
+  addBookmark: (pollId) => pollApi.addBookmark(pollId),
+  removeBookmark: (pollId) => pollApi.removeBookmark(pollId),
 };

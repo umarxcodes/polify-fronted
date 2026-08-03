@@ -1,7 +1,35 @@
-import { searchPolls, searchUsers, getSuggestions } from "../api/searchApi";
+import {
+  searchPolls,
+  searchUsers,
+  searchCategories,
+  globalSearch,
+  getSuggestions,
+  getTrendingPolls,
+  getLatestPolls,
+  getPopularPolls,
+  getEndingSoonPolls,
+  getRecommendedPolls,
+  getSearchHistory,
+  deleteSearchHistory,
+  deleteSearchHistoryItem,
+  getRecentlyViewed,
+  addRecentlyViewed,
+} from "../endpoints/searchApi";
 
 export const searchService = {
   searchPolls,
   searchUsers,
+  searchCategories,
+  globalSearch,
   getSuggestions,
+  getTrendingPolls,
+  getLatestPolls,
+  getPopularPolls,
+  getEndingSoonPolls,
+  getRecommendedPolls,
+  getSearchHistory,
+  deleteSearchHistory,
+  deleteSearchHistoryItem,
+  getRecentlyViewed,
+  addRecentlyViewed,
 };

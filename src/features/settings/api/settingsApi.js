@@ -1,16 +1,17 @@
-import { apiClient } from "../../../lib/axios";
+import { apiClient } from '../../../lib/axios'
+import { normalizeUserResponse } from '../../../utils/apiResponse'
 
 export const getSettings = async () => {
-  const { data } = await apiClient.get("/settings");
-  return data;
-};
+  const response = await apiClient.get('/users/me')
+  return normalizeUserResponse(response.data)
+}
 
 export const updateSettings = async (payload) => {
-  const { data } = await apiClient.put("/settings", payload);
-  return data;
-};
+  const response = await apiClient.patch('/users/profile', payload)
+  return normalizeUserResponse(response.data)
+}
 
 export const changePassword = async (payload) => {
-  const { data } = await apiClient.put("/settings/password", payload);
-  return data;
-};
+  const { data } = await apiClient.patch('/auth/change-password', payload)
+  return data
+}

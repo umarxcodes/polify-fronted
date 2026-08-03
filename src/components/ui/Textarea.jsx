@@ -1,8 +1,8 @@
 
 
-export const Textarea = ({ error, className = '', ...props }) => (
+export const Textarea = ({ error, className = '', dark, ...props }) => (
   <textarea
-    className={`input ${error ? 'input-error' : ''} ${className}`}
+    className={`input ${error ? 'input-error' : ''} ${dark ? 'input-dark' : ''} ${className}`}
     {...props}
   />
 );
