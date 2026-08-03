@@ -98,7 +98,8 @@ apiClient.interceptors.response.use(
   (response) => {
     // The API exposes this header because its CSRF cookie belongs to the API
     // domain and is unreadable from a separately deployed Vercel frontend.
-    setCsrfToken(response.headers?.['x-csrf-token'])
+    const csrf = response.headers?.['x-csrf-token'] || response.data?.data?.csrfToken
+    if (csrf) setCsrfToken(csrf)
     return response
   },
   async (error) => {
