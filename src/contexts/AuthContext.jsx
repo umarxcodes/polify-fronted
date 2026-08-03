@@ -54,8 +54,9 @@ export function AuthProvider({ children }) {
       setIsLoading(true)
       setRestoreError(null)
       try {
+        await authService.getCsrfToken().catch(() => undefined)
+
         if (!getAuthToken()) {
-          await authService.getCsrfToken().catch(() => undefined)
           const accessToken = await refreshAccessToken()
           if (!accessToken) throw new Error('No access token returned')
           setAuthToken(accessToken)
