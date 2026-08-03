@@ -54,12 +54,7 @@ export function AuthProvider({ children }) {
       setIsLoading(true)
       setRestoreError(null)
       try {
-        // A persisted access token can restore the user immediately. If it has
-        // expired, the Axios interceptor refreshes it once and retries /me.
-        // Only use the refresh cookie directly when there is no access token.
         if (!getAuthToken()) {
-          // CSRF setup is best-effort: an unavailable CSRF endpoint must never
-          // invalidate an otherwise valid refresh-cookie session.
           await authService.getCsrfToken().catch(() => undefined)
           const accessToken = await refreshAccessToken()
           if (!accessToken) throw new Error('No access token returned')
@@ -74,14 +69,26 @@ export function AuthProvider({ children }) {
         }
       } catch (error) {
         if (!active) return
-        // A 401 means both the access token and refresh-cookie session are no
-        // longer usable. Network/server failures are not logouts: preserve the
-        // existing token and let the route show a recoverable loading state.
-        if (error.response?.status === 401 || error.message === 'No access token returned') {
-          clearAuth()
-        } else {
-          setRestoreError(error)
+        const status = error?.response?.status
+        const isAuthFailure = status === 401 || error?.message === 'No access token returned'
+        if (isAuthFailure) {
+          await authService.getCsrfToken().catch(() => undefined)
+          try {
+            const accessToken = await refreshAccessToken()
+            if (accessToken && active) {
+              setAuthToken(accessToken)
+              const currentUser = await authService.getMe()
+              if (currentUser && active) {
+                setUser(currentUser)
+                setRestoreError(null)
+                return
+              }
+            }
+          } catch {
+            // fall through to clear auth
+          }
         }
+        clearAuth()
       } finally {
         if (active) setIsLoading(false)
       }
